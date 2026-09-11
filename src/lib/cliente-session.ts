@@ -2,8 +2,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 
-const COOKIE_NAME = "ixmegallo_admin_session";
-const SESSION_DURATION_SECONDS = 60 * 60 * 8; // 8 hours
+const COOKIE_NAME = "ixmegallo_cliente_session";
+const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 30; // 30 días
 
 function getSecretKey() {
   const secret = process.env.AUTH_SECRET;
@@ -13,15 +13,14 @@ function getSecretKey() {
   return new TextEncoder().encode(secret);
 }
 
-export type AdminSessionPayload = {
+export type ClienteSessionPayload = {
   sub: string;
   email: string;
   nombre: string;
-  rol: string;
 };
 
-export async function createAdminSession(payload: AdminSessionPayload) {
-  const token = await new SignJWT({ ...payload, kind: "admin" })
+export async function createClienteSession(payload: ClienteSessionPayload) {
+  const token = await new SignJWT({ ...payload, kind: "cliente" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_DURATION_SECONDS}s`)
@@ -37,28 +36,27 @@ export async function createAdminSession(payload: AdminSessionPayload) {
   });
 }
 
-export async function getAdminSession(): Promise<AdminSessionPayload | null> {
+export async function getClienteSession(): Promise<ClienteSessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
 
   try {
     const { payload } = await jwtVerify(token, getSecretKey());
-    if (payload.kind !== "admin") return null;
+    if (payload.kind !== "cliente") return null;
     return {
-      sub: String(payload.sub ?? payload["sub"] ?? ""),
+      sub: String(payload.sub ?? ""),
       email: String(payload.email ?? ""),
       nombre: String(payload.nombre ?? ""),
-      rol: String(payload.rol ?? ""),
     };
   } catch {
     return null;
   }
 }
 
-export async function destroyAdminSession() {
+export async function destroyClienteSession() {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
 }
 
-export { COOKIE_NAME };
+export { COOKIE_NAME as CLIENTE_COOKIE_NAME };

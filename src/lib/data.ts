@@ -93,3 +93,35 @@ export async function getLotesConManzana() {
     include: { manzana: true },
   });
 }
+
+export async function getLotePorId(id: string) {
+  return prisma.lote.findUnique({
+    where: { id },
+    include: {
+      manzana: true,
+      cliente: true,
+      pagos: { orderBy: { fecha: "asc" } },
+    },
+  });
+}
+
+export async function getLotesDeCliente(clienteId: string) {
+  return prisma.lote.findMany({
+    where: { clienteId },
+    orderBy: [{ manzana: { numero: "asc" } }, { numero: "asc" }],
+    include: {
+      manzana: true,
+      pagos: { orderBy: { fecha: "asc" } },
+    },
+  });
+}
+
+/** Solo números de lote de una manzana, sin datos sensibles — para dar contexto visual al cliente sin exponer info de otros compradores. */
+export async function getNumerosLotesDeManzana(manzanaId: string) {
+  const lotes = await prisma.lote.findMany({
+    where: { manzanaId },
+    select: { numero: true, clave: true },
+    orderBy: { numero: "asc" },
+  });
+  return lotes;
+}

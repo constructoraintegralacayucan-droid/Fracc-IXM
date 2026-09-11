@@ -9,7 +9,7 @@ import {
   destroyAdminSession,
 } from "@/lib/session";
 import { requireAdmin } from "@/lib/require-admin";
-import type { EstatusLote } from "@prisma/client";
+import type { EstatusLote, MetodoPago } from "@prisma/client";
 
 export type LoginState = { ok: boolean; message: string };
 
@@ -118,6 +118,137 @@ export async function confirmarReserva(formData: FormData) {
   revalidatePath("/admin/lotes");
   revalidatePath("/admin/dashboard");
   revalidatePath("/lotes");
+}
+
+export type AsignarClienteState = { ok: boolean; message: string };
+
+export async function asignarCliente(
+  _prevState: AsignarClienteState,
+  formData: FormData
+): Promise<AsignarClienteState> {
+  await requireAdmin();
+
+  const loteId = String(formData.get("loteId") ?? "");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const telefono = String(formData.get("telefono") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!loteId || !email || !nombre || !password) {
+    return { ok: false, message: "Completa correo, nombre y contraseña." };
+  }
+  if (password.length < 6) {
+    return {
+      ok: false,
+      message: "La contraseña debe tener al menos 6 caracteres.",
+    };
+  }
+
+  const existente = await prisma.cliente.findUnique({ where: { email } });
+  if (existente) {
+    await prisma.lote.update({
+      where: { id: loteId },
+      data: { clienteId: existente.id },
+    });
+  } else {
+    const passwordHash = await bcrypt.hash(password, 10);
+    const cliente = await prisma.cliente.create({
+      data: { email, nombre, telefono: telefono || null, passwordHash },
+    });
+    await prisma.lote.update({
+      where: { id: loteId },
+      data: { clienteId: cliente.id },
+    });
+  }
+
+  revalidatePath(`/admin/lotes/${loteId}`);
+  revalidatePath("/admin/lotes");
+  return { ok: true, message: "Cliente asignado correctamente." };
+}
+
+export async function desasignarCliente(formData: FormData) {
+  await requireAdmin();
+  const loteId = String(formData.get("loteId") ?? "");
+  if (!loteId) return;
+
+  await prisma.lote.update({
+    where: { id: loteId },
+    data: { clienteId: null },
+  });
+
+  revalidatePath(`/admin/lotes/${loteId}`);
+  revalidatePath("/admin/lotes");
+}
+
+export async function actualizarPlanPago(formData: FormData) {
+  await requireAdmin();
+
+  const loteId = String(formData.get("loteId") ?? "");
+  const numPagosTotal = Number(formData.get("numPagosTotal") ?? 0);
+  const montoPagoMensual = Number(formData.get("montoPagoMensual") ?? 0);
+  const fechaInicioPagos = String(formData.get("fechaInicioPagos") ?? "");
+
+  if (!loteId) return;
+
+  await prisma.lote.update({
+    where: { id: loteId },
+    data: {
+      numPagosTotal: numPagosTotal > 0 ? Math.round(numPagosTotal) : null,
+      montoPagoMensual: montoPagoMensual > 0 ? montoPagoMensual : null,
+      fechaInicioPagos: fechaInicioPagos ? new Date(fechaInicioPagos) : null,
+    },
+  });
+
+  revalidatePath(`/admin/lotes/${loteId}`);
+}
+
+export async function registrarPago(formData: FormData) {
+  const admin = await requireAdmin();
+
+  const loteId = String(formData.get("loteId") ?? "");
+  const monto = Number(formData.get("monto") ?? 0);
+  const fecha = String(formData.get("fecha") ?? "");
+  const metodo = String(formData.get("metodo") ?? "EFECTIVO") as MetodoPago;
+  const notas = String(formData.get("notas") ?? "").trim();
+  const numeroCuotaRaw = formData.get("numeroCuota");
+  const numeroCuota = numeroCuotaRaw ? Number(numeroCuotaRaw) : null;
+
+  if (!loteId || !monto || monto <= 0) return;
+
+  await prisma.pago.create({
+    data: {
+      loteId,
+      monto,
+      fecha: fecha ? new Date(fecha) : new Date(),
+      metodo: [
+        "EFECTIVO",
+        "TRANSFERENCIA",
+        "DEPOSITO",
+        "TARJETA",
+        "OTRO",
+      ].includes(metodo)
+        ? metodo
+        : "EFECTIVO",
+      notas: notas || null,
+      numeroCuota: numeroCuota && numeroCuota > 0 ? numeroCuota : null,
+      registradoPor: admin.email,
+    },
+  });
+
+  revalidatePath(`/admin/lotes/${loteId}`);
+  revalidatePath("/cliente/dashboard");
+}
+
+export async function eliminarPago(formData: FormData) {
+  await requireAdmin();
+  const pagoId = String(formData.get("pagoId") ?? "");
+  const loteId = String(formData.get("loteId") ?? "");
+  if (!pagoId) return;
+
+  await prisma.pago.delete({ where: { id: pagoId } });
+
+  revalidatePath(`/admin/lotes/${loteId}`);
+  revalidatePath("/cliente/dashboard");
 }
 
 export async function cancelarReserva(formData: FormData) {

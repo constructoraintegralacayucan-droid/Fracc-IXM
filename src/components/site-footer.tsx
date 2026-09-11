@@ -39,6 +39,11 @@ export function SiteFooter() {
               </a>
             </li>
             <li>
+              <Link href="/cliente/login" className="hover:text-gold-400">
+                Mi cuenta (clientes)
+              </Link>
+            </li>
+            <li>
               <Link href="/admin/login" className="hover:text-gold-400">
                 Acceso administrador
               </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { actualizarLote } from "@/app/admin/actions";
 import { formatoMoneda } from "@/lib/financiamiento";
 
@@ -181,6 +182,13 @@ function FilaLote({ lote }: { lote: LoteAdminPlano }) {
         >
           Guardar
         </button>
+
+        <Link
+          href={`/admin/lotes/${lote.id}`}
+          className="justify-self-end rounded-full border border-gold-500/50 px-3 py-1.5 text-xs font-semibold text-gold-600 hover:bg-gold-400/10"
+        >
+          Cliente y pagos →
+        </Link>
       </form>
     </td>
   );
