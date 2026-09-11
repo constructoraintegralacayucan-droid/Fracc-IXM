@@ -11,10 +11,12 @@ export function SiteFooter() {
           <p className="font-display text-2xl font-semibold text-sand-50">
             Terravista
           </p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-sand-400">
+            by Constructora Integral Acayucan
+          </p>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-sand-300">
-            Fraccionamiento Ixmegallo — Acayucan, Veracruz. Lotes
-            residenciales con financiamiento directo y áreas comunes de
-            primer nivel.
+            Fraccionamiento Ixmegallo — Acayucan, Veracruz. Financiamiento
+            directo, sin intereses.
           </p>
         </div>
 

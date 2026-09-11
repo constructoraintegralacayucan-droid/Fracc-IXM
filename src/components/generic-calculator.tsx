@@ -7,10 +7,12 @@ export function GenericCalculator({
   precioBase,
   inicialMinimoPct,
   plazos,
+  plazoRecomendado,
 }: {
   precioBase: number;
   inicialMinimoPct: number;
   plazos: number[];
+  plazoRecomendado: number;
 }) {
   const [precio, setPrecio] = useState(precioBase);
   const inicialMinima = useMemo(
@@ -18,7 +20,9 @@ export function GenericCalculator({
     [precio, inicialMinimoPct]
   );
   const [inicial, setInicial] = useState(inicialMinima);
-  const [plazoMeses, setPlazoMeses] = useState(plazos[0]);
+  const [plazoMeses, setPlazoMeses] = useState(
+    plazos.includes(plazoRecomendado) ? plazoRecomendado : plazos[0]
+  );
 
   const resultado = useMemo(
     () =>
@@ -90,7 +94,7 @@ export function GenericCalculator({
                     : "border-forest-800/20 text-forest-800 hover:border-forest-800/50"
                 }`}
               >
-                {p} meses
+                {p} meses{p === plazoRecomendado ? " ★" : ""}
               </button>
             ))}
           </div>

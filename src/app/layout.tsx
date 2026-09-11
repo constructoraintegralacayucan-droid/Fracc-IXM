@@ -14,9 +14,9 @@ const displayFont = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Terravista | Fraccionamiento Ixmegallo",
+  title: "Terravista by Constructora Integral Acayucan",
   description:
-    "Fraccionamiento Ixmegallo en Acayucan, Veracruz. Lotes residenciales con financiamiento directo sin intereses.",
+    "Fraccionamiento Ixmegallo en Acayucan, Veracruz. Financiamiento directo sin intereses.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

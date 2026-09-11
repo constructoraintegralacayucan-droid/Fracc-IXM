@@ -36,9 +36,11 @@ async function main() {
       ubicacion: "Acayucan, Veracruz, México",
       moneda: "MXN",
       descripcion:
-        "Fraccionamiento residencial en Acayucan, Veracruz, distribuido en 8 manzanas con 182 lotes, áreas comunes y financiamiento directo sin intereses.",
-      inicialMinimoPct: 10,
+        "Fraccionamiento en Acayucan, Veracruz. A 100 metros de la calle pavimentada y a 10 minutos del centro de Acayucan, con crecimiento urbano cercano y financiamiento directo sin intereses.",
+      inicialMinimoPct: 20,
       plazosMeses: [6, 12, 18, 24, 36, 48, 60, 72, 84, 96],
+      plazoMaxPublico: 24,
+      plazoRecomendado: 12,
       tasaInteres: 0,
       reservaMinima: 5000,
       plazoReservaDias: 3,

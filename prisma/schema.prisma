@@ -137,15 +137,20 @@ model AdminUser {
 }
 
 model ProyectoConfig {
-  id                String   @id @default(cuid())
-  nombre            String   @default("Fraccionamiento Ixmegallo")
-  ubicacion         String   @default("Acayucan, Veracruz, México")
-  moneda            String   @default("MXN")
-  descripcion       String   @default("")
-  inicialMinimoPct  Float    @default(10)
-  plazosMeses       Int[]    @default([6, 12, 18, 24, 36, 48, 60, 72, 84, 96])
-  tasaInteres       Float    @default(0)
-  reservaMinima     Decimal  @default(5000) @db.Decimal(12, 2)
-  plazoReservaDias  Int      @default(3)
-  updatedAt         DateTime @updatedAt
+  id                String    @id @default(cuid())
+  nombre            String    @default("Fraccionamiento Ixmegallo")
+  ubicacion         String    @default("Acayucan, Veracruz, México")
+  moneda            String    @default("MXN")
+  descripcion       String    @default("")
+  inicialMinimoPct  Float     @default(20)
+  plazosMeses       Int[]     @default([6, 12, 18, 24, 36, 48, 60, 72, 84, 96])
+  plazoMaxPublico   Int       @default(24)
+  plazoRecomendado  Int       @default(12)
+  tasaInteres       Float     @default(0)
+  reservaMinima     Decimal   @default(5000) @db.Decimal(12, 2)
+  plazoReservaDias  Int       @default(3)
+  ofertaActiva      Boolean   @default(false)
+  ofertaTitulo      String?
+  ofertaFin         DateTime?
+  updatedAt         DateTime  @updatedAt
 }

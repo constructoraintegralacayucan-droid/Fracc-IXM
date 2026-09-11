@@ -1,21 +1,35 @@
 import Link from "next/link";
-import { getProyectoConfig, getStats, getResumenPorManzana } from "@/lib/data";
+import { getProyectoConfig, getPrecioDesde } from "@/lib/data";
 import { formatoMoneda } from "@/lib/financiamiento";
 import { GenericCalculator } from "@/components/generic-calculator";
+import { CountdownBanner } from "@/components/countdown-banner";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [config, stats, resumen] = await Promise.all([
+  const [config, precioDesde] = await Promise.all([
     getProyectoConfig(),
-    getStats(),
-    getResumenPorManzana(),
+    getPrecioDesde(),
   ]);
 
-  const precioPromedio = Math.round(stats.montoTotal / stats.total);
+  const ofertaVigente =
+    config.ofertaActiva &&
+    config.ofertaFin &&
+    config.ofertaFin.getTime() > Date.now();
+
+  const plazosPublicos = config.plazosMeses.filter(
+    (p) => p <= config.plazoMaxPublico
+  );
 
   return (
     <>
+      {ofertaVigente && (
+        <CountdownBanner
+          titulo={config.ofertaTitulo ?? "Oferta por tiempo limitado"}
+          finISO={config.ofertaFin!.toISOString()}
+        />
+      )}
+
       <section className="relative overflow-hidden bg-forest-950 text-sand-50">
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.14]"
@@ -61,16 +75,20 @@ export default async function HomePage() {
             </a>
           </div>
 
-          <div className="mt-16 grid grid-cols-2 gap-6 border-t border-sand-100/15 pt-10 sm:grid-cols-4">
-            <Stat label="Lotes totales" value={String(stats.total)} />
-            <Stat label="Manzanas" value={String(resumen.length)} />
-            <Stat label="Disponibles" value={String(stats.disponibles)} />
-            <Stat
-              label="Desde"
-              value={formatoMoneda(
-                Math.min(...resumen.map(() => precioPromedio))
-              )}
-            />
+          <div className="mt-16 flex flex-wrap items-center gap-6 border-t border-sand-100/15 pt-10">
+            <span className="rounded-full bg-gold-400/20 px-4 py-2 text-sm font-semibold text-gold-400">
+              Quedan pocos lotes disponibles
+            </span>
+            {precioDesde > 0 && (
+              <div>
+                <p className="font-display text-2xl font-semibold text-sand-50">
+                  Desde {formatoMoneda(precioDesde, config.moneda)}
+                </p>
+                <p className="text-xs uppercase tracking-wide text-sand-300">
+                  Precio de lote
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -85,18 +103,14 @@ export default async function HomePage() {
           </h2>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid gap-6 sm:grid-cols-3">
           <Feature
             title="Financiamiento directo"
             description="Sin intereses, sin buró de crédito. Tú eliges el plazo que mejor se acomode a tu bolsillo."
           />
           <Feature
             title="Ubicación estratégica"
-            description="A minutos del centro de Acayucan, con vías de acceso pavimentadas y crecimiento urbano cercano."
-          />
-          <Feature
-            title="Áreas comunes"
-            description="Club house, alberca, canchas deportivas y parque central para toda la familia."
+            description="A 100 metros de la calle pavimentada y a 10 minutos del centro de Acayucan, con crecimiento urbano cercano."
           />
           <Feature
             title="Certeza legal"
@@ -105,86 +119,30 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-sand-100/70">
-        <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
-          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
-                Disponibilidad
-              </p>
-              <h2 className="mt-3 font-display text-3xl font-semibold text-forest-900 sm:text-4xl">
-                Avance por manzana
-              </h2>
-            </div>
-            <Link
-              href="/lotes"
-              className="text-sm font-semibold text-forest-800 underline decoration-gold-500 decoration-2 underline-offset-4"
-            >
-              Ver mapa interactivo completo →
-            </Link>
+      <section id="financiamiento" className="bg-sand-100/70">
+        <div className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
+              Financiamiento
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-semibold text-forest-900 sm:text-4xl">
+              Simula tu plan de pagos
+            </h2>
+            <p className="mt-3 text-forest-700">
+              Sin intereses, con enganche mínimo del {config.inicialMinimoPct}%
+              y hasta {config.plazoMaxPublico} meses. Lo más recomendado por
+              nuestros clientes: {config.plazoRecomendado} meses.
+            </p>
           </div>
 
-          <div className="mt-10 overflow-x-auto rounded-2xl border border-forest-900/10 bg-sand-50">
-            <table className="w-full min-w-[560px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-forest-900/10 text-xs uppercase tracking-wide text-forest-700/70">
-                  <th className="px-5 py-3.5 font-semibold">Manzana</th>
-                  <th className="px-5 py-3.5 font-semibold">Lotes</th>
-                  <th className="px-5 py-3.5 font-semibold">Disponibles</th>
-                  <th className="px-5 py-3.5 font-semibold">Apartados</th>
-                  <th className="px-5 py-3.5 font-semibold">Vendidos</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resumen.map((r) => (
-                  <tr
-                    key={r.manzana}
-                    className="border-b border-forest-900/5 last:border-0"
-                  >
-                    <td className="px-5 py-3.5 font-medium text-forest-900">
-                      Manzana {r.manzana}
-                    </td>
-                    <td className="px-5 py-3.5 text-forest-800">
-                      {r.totalLotes}
-                    </td>
-                    <td className="px-5 py-3.5 text-forest-600">
-                      {r.disponibles}
-                    </td>
-                    <td className="px-5 py-3.5 text-gold-600">
-                      {r.apartados}
-                    </td>
-                    <td className="px-5 py-3.5 text-forest-900/60">
-                      {r.vendidos}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-10">
+            <GenericCalculator
+              precioBase={precioDesde || 75000}
+              inicialMinimoPct={config.inicialMinimoPct}
+              plazos={plazosPublicos}
+              plazoRecomendado={config.plazoRecomendado}
+            />
           </div>
-        </div>
-      </section>
-
-      <section id="financiamiento" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
-            Financiamiento
-          </p>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-forest-900 sm:text-4xl">
-            Simula tu plan de pagos
-          </h2>
-          <p className="mt-3 text-forest-700">
-            Ajusta el precio, el enganche y el plazo para conocer tu
-            mensualidad estimada. Sin intereses, con inicial mínima del{" "}
-            {config.inicialMinimoPct}%.
-          </p>
-        </div>
-
-        <div className="mt-10">
-          <GenericCalculator
-            precioBase={precioPromedio}
-            inicialMinimoPct={config.inicialMinimoPct}
-            plazos={config.plazosMeses}
-          />
         </div>
       </section>
 
@@ -206,19 +164,6 @@ export default async function HomePage() {
         </div>
       </section>
     </>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="font-display text-3xl font-semibold text-sand-50">
-        {value}
-      </p>
-      <p className="mt-1 text-xs uppercase tracking-wide text-sand-300">
-        {label}
-      </p>
-    </div>
   );
 }
 

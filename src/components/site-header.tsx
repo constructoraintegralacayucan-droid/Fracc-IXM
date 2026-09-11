@@ -25,8 +25,13 @@ export function SiteHeader() {
               />
             </svg>
           </span>
-          <span className="font-display text-xl font-semibold tracking-wide text-forest-900">
-            Terravista
+          <span className="leading-tight">
+            <span className="block font-display text-xl font-semibold tracking-wide text-forest-900">
+              Terravista
+            </span>
+            <span className="block text-[10px] font-medium uppercase tracking-[0.15em] text-forest-700/60">
+              by Constructora Integral Acayucan
+            </span>
           </span>
         </Link>
 

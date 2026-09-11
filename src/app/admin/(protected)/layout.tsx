@@ -15,12 +15,15 @@ export default async function AdminLayout({
         <p className="font-display text-xl font-semibold text-sand-50">
           Terravista
         </p>
-        <p className="mt-0.5 text-xs text-sand-400">Panel administrador</p>
+        <p className="mt-0.5 text-xs text-sand-400">
+          by Constructora Integral Acayucan
+        </p>
 
         <nav className="mt-10 flex flex-col gap-1 text-sm">
           <NavLink href="/admin/dashboard">Dashboard</NavLink>
           <NavLink href="/admin/lotes">Lotes</NavLink>
           <NavLink href="/admin/reservas">Reservas</NavLink>
+          <NavLink href="/admin/configuracion">Configuración</NavLink>
         </nav>
 
         <div className="mt-auto pt-8 text-xs text-sand-400">

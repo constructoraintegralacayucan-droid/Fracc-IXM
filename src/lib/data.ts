@@ -47,6 +47,14 @@ export async function getStats() {
   };
 }
 
+export async function getPrecioDesde() {
+  const min = await prisma.lote.aggregate({
+    where: { estatus: "DISPONIBLE" },
+    _min: { precio: true },
+  });
+  return Number(min._min.precio ?? 0);
+}
+
 export async function getResumenPorManzana() {
   const manzanas = await prisma.manzana.findMany({
     orderBy: { numero: "asc" },

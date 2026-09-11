@@ -251,6 +251,62 @@ export async function eliminarPago(formData: FormData) {
   revalidatePath("/cliente/dashboard");
 }
 
+export type ActualizarConfigState = { ok: boolean; message: string };
+
+export async function actualizarConfig(
+  _prevState: ActualizarConfigState,
+  formData: FormData
+): Promise<ActualizarConfigState> {
+  await requireAdmin();
+
+  const config = await prisma.proyectoConfig.findFirst();
+  if (!config) {
+    return { ok: false, message: "No hay configuración para actualizar." };
+  }
+
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const ubicacion = String(formData.get("ubicacion") ?? "").trim();
+  const descripcion = String(formData.get("descripcion") ?? "").trim();
+  const inicialMinimoPct = Number(formData.get("inicialMinimoPct") ?? 20);
+  const plazoMaxPublico = Number(formData.get("plazoMaxPublico") ?? 24);
+  const plazoRecomendado = Number(formData.get("plazoRecomendado") ?? 12);
+  const tasaInteres = Number(formData.get("tasaInteres") ?? 0);
+  const reservaMinima = Number(formData.get("reservaMinima") ?? 0);
+  const plazoReservaDias = Number(formData.get("plazoReservaDias") ?? 3);
+
+  const ofertaActiva = formData.get("ofertaActiva") === "on";
+  const ofertaTitulo = String(formData.get("ofertaTitulo") ?? "").trim();
+  const ofertaFinRaw = String(formData.get("ofertaFin") ?? "");
+
+  if (!nombre || !ubicacion) {
+    return { ok: false, message: "Nombre y ubicación son obligatorios." };
+  }
+
+  await prisma.proyectoConfig.update({
+    where: { id: config.id },
+    data: {
+      nombre,
+      ubicacion,
+      descripcion,
+      inicialMinimoPct,
+      plazoMaxPublico,
+      plazoRecomendado,
+      tasaInteres,
+      reservaMinima,
+      plazoReservaDias,
+      ofertaActiva,
+      ofertaTitulo: ofertaTitulo || null,
+      ofertaFin: ofertaFinRaw ? new Date(ofertaFinRaw) : null,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/lotes");
+  revalidatePath("/admin/configuracion");
+
+  return { ok: true, message: "Configuración actualizada." };
+}
+
 export async function cancelarReserva(formData: FormData) {
   await requireAdmin();
   const reservaId = String(formData.get("reservaId") ?? "");
