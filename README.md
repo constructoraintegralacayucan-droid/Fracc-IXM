@@ -71,6 +71,41 @@ datos) antes de usar esto en producción.
   desde `/admin/reservas`. Cancelar libera el lote de vuelta a
   `DISPONIBLE`.
 
+## Despliegue en producción (Vercel + Neon)
+
+1. **Base de datos — Neon (Postgres serverless, capa gratuita)**
+   - Crea una cuenta en https://neon.tech y un proyecto nuevo.
+   - Copia el **connection string pooled** (el que dice `-pooler` en el host;
+     es el recomendado para funciones serverless como las de Vercel).
+
+2. **Vercel**
+   - En https://vercel.com → **Add New → Project** → importa el repo
+     `constructoraintegralacayucan-droid/Fracc-IXM` de GitHub.
+   - Framework se detecta solo como Next.js, no cambies el Build Command
+     (ya quedó configurado en `package.json` para correr
+     `prisma migrate deploy && next build`, así que las migraciones se
+     aplican solas en cada deploy).
+   - En **Environment Variables** agrega:
+     - `DATABASE_URL` → el connection string pooled de Neon.
+     - `AUTH_SECRET` → un valor aleatorio largo. Puedes generarlo con
+       `openssl rand -base64 32`.
+   - Dale **Deploy**.
+
+3. **Cargar los datos reales (una sola vez)**
+   Después del primer deploy exitoso, corre el seed apuntando a la base de
+   producción desde tu máquina (o desde esta sesión):
+   ```bash
+   DATABASE_URL="<el mismo connection string de Neon>" npx prisma db seed
+   ```
+   Esto crea las 8 manzanas, los 182 lotes y el usuario admin
+   (`admin@ixmegallo.mx` / `Ixmegallo2026!`).
+
+4. **Después del primer login en producción**
+   - Cambia la contraseña del admin (por ahora se cambia directo en la base
+     de datos o agregando una pantalla de "cambiar contraseña" — no está
+     implementada todavía).
+   - Verifica que `/admin/reservas` reciba las solicitudes reales.
+
 ## Pendiente para producción
 
 - Conectar una pasarela de pagos real (Stripe/Culqi/Conekta) — por ahora el
