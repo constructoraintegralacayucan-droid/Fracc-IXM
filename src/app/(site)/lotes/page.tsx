@@ -50,10 +50,24 @@ export default async function LotesPage() {
         Selecciona un lote disponible para ver su precio, simular tu
         financiamiento y enviar tu solicitud de apartado.
       </p>
-      <p className="mt-2 max-w-2xl text-sm text-forest-700/60">
-        Calles del fraccionamiento: Ixmegayo, Panamá, Nicaragua, Honduras,
-        Colombia, Costa Rica, Venezuela y El Salvador.
-      </p>
+
+      <div className="mt-8 overflow-hidden rounded-2xl border border-forest-900/10 bg-sand-50">
+        <div className="border-b border-forest-900/10 px-5 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-forest-700/70">
+            Plano de referencia
+          </p>
+          <p className="mt-0.5 text-xs text-forest-700/50">
+            Solo para ubicarte (calles y manzanas reales). Para elegir y
+            apartar tu lote, usa el mapa interactivo de abajo.
+          </p>
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/plano-ixmegallo.svg"
+          alt="Plano de referencia del Fraccionamiento Ixmegallo con manzanas y calles"
+          className="max-h-[560px] w-full bg-sand-50 object-contain p-4"
+        />
+      </div>
 
       <div className="mt-10">
         <LoteMap
