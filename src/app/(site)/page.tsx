@@ -1,15 +1,23 @@
 import Link from "next/link";
-import { getProyectoConfig, getPrecioDesde } from "@/lib/data";
+import {
+  getProyectoConfig,
+  getPrecioDesde,
+  getGaleriaImagenes,
+  getTestimoniosAprobados,
+} from "@/lib/data";
 import { formatoMoneda } from "@/lib/financiamiento";
 import { GenericCalculator } from "@/components/generic-calculator";
 import { CountdownBanner } from "@/components/countdown-banner";
+import { HeroCarousel } from "@/components/hero-carousel";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [config, precioDesde] = await Promise.all([
+  const [config, precioDesde, imagenes, testimonios] = await Promise.all([
     getProyectoConfig(),
     getPrecioDesde(),
+    getGaleriaImagenes(),
+    getTestimoniosAprobados(),
   ]);
 
   const ofertaVigente =
@@ -31,23 +39,27 @@ export default async function HomePage() {
       )}
 
       <section className="relative overflow-hidden bg-forest-950 text-sand-50">
-        <svg
-          className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.14]"
-          viewBox="0 0 800 500"
-          preserveAspectRatio="none"
-          fill="none"
-        >
-          {Array.from({ length: 9 }).map((_, i) => (
-            <path
-              key={i}
-              d={`M-50 ${60 + i * 50} C 200 ${10 + i * 50}, 500 ${
-                110 + i * 50
-              }, 850 ${40 + i * 50}`}
-              stroke="#cba86a"
-              strokeWidth="1"
-            />
-          ))}
-        </svg>
+        {imagenes.length > 0 ? (
+          <HeroCarousel imagenes={imagenes.map((i) => i.dataUrl)} />
+        ) : (
+          <svg
+            className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.14]"
+            viewBox="0 0 800 500"
+            preserveAspectRatio="none"
+            fill="none"
+          >
+            {Array.from({ length: 9 }).map((_, i) => (
+              <path
+                key={i}
+                d={`M-50 ${60 + i * 50} C 200 ${10 + i * 50}, 500 ${
+                  110 + i * 50
+                }, 850 ${40 + i * 50}`}
+                stroke="#cba86a"
+                strokeWidth="1"
+              />
+            ))}
+          </svg>
+        )}
 
         <div className="relative mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gold-400">
@@ -58,6 +70,9 @@ export default async function HomePage() {
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-sand-200">
             {config.descripcion}
+          </p>
+          <p className="mt-4 max-w-xl font-display text-xl italic text-gold-400">
+            Empieza hoy el patrimonio de tu familia.
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4">
@@ -85,11 +100,17 @@ export default async function HomePage() {
                   Desde {formatoMoneda(precioDesde, config.moneda)}
                 </p>
                 <p className="text-xs uppercase tracking-wide text-sand-300">
-                  Precio de lote
+                  Precio por lote · en lotes seleccionados
                 </p>
               </div>
             )}
           </div>
+
+          {config.disclaimer && (
+            <p className="mt-8 max-w-2xl text-xs leading-relaxed text-sand-400">
+              {config.disclaimer}
+            </p>
+          )}
         </div>
       </section>
 
@@ -119,7 +140,45 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="financiamiento" className="bg-sand-100/70">
+      {testimonios.length > 0 && (
+        <section className="bg-sand-100/70">
+          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
+                Testimonios
+              </p>
+              <h2 className="mt-3 font-display text-3xl font-semibold text-forest-900 sm:text-4xl">
+                Lo que dicen nuestros compradores
+              </h2>
+            </div>
+
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {testimonios.map((t) => (
+                <div
+                  key={t.id}
+                  className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6"
+                >
+                  <div className="text-gold-500">
+                    {"★".repeat(t.calificacion)}
+                    {"☆".repeat(Math.max(0, 5 - t.calificacion))}
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-forest-800">
+                    “{t.mensaje}”
+                  </p>
+                  <p className="mt-4 text-sm font-semibold text-forest-900">
+                    {t.nombre}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section
+        id="financiamiento"
+        className={testimonios.length > 0 ? "" : "bg-sand-100/70"}
+      >
         <div className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">

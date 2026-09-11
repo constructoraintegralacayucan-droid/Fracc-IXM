@@ -277,6 +277,12 @@ export async function actualizarConfig(
   const ofertaActiva = formData.get("ofertaActiva") === "on";
   const ofertaTitulo = String(formData.get("ofertaTitulo") ?? "").trim();
   const ofertaFinRaw = String(formData.get("ofertaFin") ?? "");
+  const disclaimer = String(formData.get("disclaimer") ?? "").trim();
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const terminosCondiciones = String(
+    formData.get("terminosCondiciones") ?? ""
+  );
+  const avisoPrivacidad = String(formData.get("avisoPrivacidad") ?? "");
 
   if (!nombre || !ubicacion) {
     return { ok: false, message: "Nombre y ubicación son obligatorios." };
@@ -297,14 +303,101 @@ export async function actualizarConfig(
       ofertaActiva,
       ofertaTitulo: ofertaTitulo || null,
       ofertaFin: ofertaFinRaw ? new Date(ofertaFinRaw) : null,
+      disclaimer,
+      whatsapp: whatsapp || null,
+      terminosCondiciones,
+      avisoPrivacidad,
     },
   });
 
   revalidatePath("/");
   revalidatePath("/lotes");
+  revalidatePath("/terminos");
+  revalidatePath("/privacidad");
   revalidatePath("/admin/configuracion");
 
   return { ok: true, message: "Configuración actualizada." };
+}
+
+const TIPOS_IMAGEN_PERMITIDOS = ["image/jpeg", "image/png", "image/webp"];
+const MAX_BYTES_IMAGEN = 4 * 1024 * 1024;
+
+export type SubirImagenState = { ok: boolean; message: string };
+
+export async function subirImagenGaleria(
+  _prevState: SubirImagenState,
+  formData: FormData
+): Promise<SubirImagenState> {
+  await requireAdmin();
+
+  const file = formData.get("imagen");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Selecciona una imagen." };
+  }
+  if (!TIPOS_IMAGEN_PERMITIDOS.includes(file.type)) {
+    return {
+      ok: false,
+      message: "Formato no permitido. Usa JPG, PNG o WEBP.",
+    };
+  }
+  if (file.size > MAX_BYTES_IMAGEN) {
+    return {
+      ok: false,
+      message: "La imagen pesa más de 4MB. Comprímela e intenta de nuevo.",
+    };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
+
+  const count = await prisma.imagenGaleria.count();
+  await prisma.imagenGaleria.create({
+    data: { dataUrl, orden: count },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/configuracion");
+
+  return { ok: true, message: "Imagen agregada." };
+}
+
+export async function eliminarImagenGaleria(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await prisma.imagenGaleria.delete({ where: { id } });
+
+  revalidatePath("/");
+  revalidatePath("/admin/configuracion");
+}
+
+export async function aprobarTestimonio(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await prisma.testimonio.update({
+    where: { id },
+    data: { estatus: "APROBADO" },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/testimonios");
+}
+
+export async function rechazarTestimonio(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await prisma.testimonio.update({
+    where: { id },
+    data: { estatus: "RECHAZADO" },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/testimonios");
 }
 
 export async function cancelarReserva(formData: FormData) {

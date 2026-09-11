@@ -3,18 +3,21 @@ import {
   getLotesDeCliente,
   getNumerosLotesDeManzana,
   getProyectoConfig,
+  getTestimonioDeCliente,
 } from "@/lib/data";
 import { calcularEstadoCuenta } from "@/lib/pagos";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
+import { TestimonioForm } from "@/components/testimonio-form";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mi lote | Terravista" };
 
 export default async function ClienteDashboardPage() {
   const session = await requireCliente();
-  const [lotes, config] = await Promise.all([
+  const [lotes, config, testimonio] = await Promise.all([
     getLotesDeCliente(session.sub),
     getProyectoConfig(),
+    getTestimonioDeCliente(session.sub),
   ]);
 
   if (lotes.length === 0) {
@@ -211,6 +214,29 @@ export default async function ClienteDashboardPage() {
           );
         })
       )}
+
+      <section className="rounded-3xl border border-forest-900/10 bg-sand-50 p-6 sm:p-8">
+        <h2 className="font-display text-xl font-semibold text-forest-900">
+          Comparte tu experiencia
+        </h2>
+        {testimonio ? (
+          <p className="mt-3 text-sm text-forest-700">
+            {testimonio.estatus === "APROBADO" &&
+              "¡Gracias! Tu testimonio ya está publicado en la página principal."}
+            {testimonio.estatus === "PENDIENTE" &&
+              "Gracias por tu testimonio. Está pendiente de revisión antes de publicarse."}
+            {testimonio.estatus === "RECHAZADO" &&
+              "Recibimos tu testimonio, pero no fue publicado."}
+          </p>
+        ) : (
+          <div className="mt-4">
+            <p className="mb-3 text-sm text-forest-700/70">
+              Nos encantaría compartir tu experiencia con otros compradores.
+            </p>
+            <TestimonioForm />
+          </div>
+        )}
+      </section>
     </div>
   );
 }

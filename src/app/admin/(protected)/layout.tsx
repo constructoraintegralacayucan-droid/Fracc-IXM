@@ -23,6 +23,7 @@ export default async function AdminLayout({
           <NavLink href="/admin/dashboard">Dashboard</NavLink>
           <NavLink href="/admin/lotes">Lotes</NavLink>
           <NavLink href="/admin/reservas">Reservas</NavLink>
+          <NavLink href="/admin/testimonios">Testimonios</NavLink>
           <NavLink href="/admin/configuracion">Configuración</NavLink>
         </nav>
 

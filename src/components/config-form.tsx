@@ -22,6 +22,10 @@ export type ConfigPlano = {
   ofertaActiva: boolean;
   ofertaTitulo: string;
   ofertaFin: string;
+  disclaimer: string;
+  whatsapp: string;
+  terminosCondiciones: string;
+  avisoPrivacidad: string;
 };
 
 export function ConfigForm({ config }: { config: ConfigPlano }) {
@@ -64,6 +68,28 @@ export function ConfigForm({ config }: { config: ConfigPlano }) {
               name="descripcion"
               defaultValue={config.descripcion}
               rows={3}
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              WhatsApp de contacto (10 dígitos)
+            </label>
+            <input
+              name="whatsapp"
+              defaultValue={config.whatsapp}
+              placeholder="9241122354"
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              Disclaimer (aviso breve, aparece en la portada)
+            </label>
+            <textarea
+              name="disclaimer"
+              defaultValue={config.disclaimer}
+              rows={2}
               className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
             />
           </div>
@@ -200,6 +226,41 @@ export function ConfigForm({ config }: { config: ConfigPlano }) {
               type="datetime-local"
               defaultValue={config.ofertaFin}
               className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <h2 className="font-display text-lg font-semibold text-forest-900">
+          Legal
+        </h2>
+        <p className="mt-1 text-sm text-forest-700/70">
+          Texto de las páginas públicas /terminos y /privacidad. Ya vienen con
+          una plantilla inicial — te recomendamos que un abogado la revise
+          antes de usarla de forma definitiva.
+        </p>
+        <div className="mt-4 grid gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              Términos y Condiciones
+            </label>
+            <textarea
+              name="terminosCondiciones"
+              defaultValue={config.terminosCondiciones}
+              rows={8}
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 font-mono text-xs"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              Aviso de Privacidad
+            </label>
+            <textarea
+              name="avisoPrivacidad"
+              defaultValue={config.avisoPrivacidad}
+              rows={8}
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 font-mono text-xs"
             />
           </div>
         </div>

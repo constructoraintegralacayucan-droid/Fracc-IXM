@@ -1,5 +1,6 @@
-import { getProyectoConfig } from "@/lib/data";
+import { getProyectoConfig, getGaleriaImagenes } from "@/lib/data";
 import { ConfigForm } from "@/components/config-form";
+import { GaleriaUploader } from "@/components/galeria-uploader";
 
 export const metadata = { title: "Configuración | Terravista Admin" };
 
@@ -10,7 +11,10 @@ function toDatetimeLocal(date: Date | null) {
 }
 
 export default async function AdminConfiguracionPage() {
-  const config = await getProyectoConfig();
+  const [config, imagenes] = await Promise.all([
+    getProyectoConfig(),
+    getGaleriaImagenes(),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -21,6 +25,15 @@ export default async function AdminConfiguracionPage() {
         Controla lo que ve el público: financiamiento, oferta flash y datos
         del proyecto.
       </p>
+
+      <div className="mt-8 rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <h2 className="font-display text-lg font-semibold text-forest-900">
+          Galería / carrusel de portada
+        </h2>
+        <div className="mt-4">
+          <GaleriaUploader imagenes={imagenes} />
+        </div>
+      </div>
 
       <div className="mt-8">
         <ConfigForm
@@ -37,6 +50,10 @@ export default async function AdminConfiguracionPage() {
             ofertaActiva: config.ofertaActiva,
             ofertaTitulo: config.ofertaTitulo ?? "",
             ofertaFin: toDatetimeLocal(config.ofertaFin),
+            disclaimer: config.disclaimer,
+            whatsapp: config.whatsapp ?? "",
+            terminosCondiciones: config.terminosCondiciones,
+            avisoPrivacidad: config.avisoPrivacidad,
           }}
         />
       </div>

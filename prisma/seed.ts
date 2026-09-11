@@ -1,6 +1,11 @@
 import { PrismaClient, EstatusLote, TipoPago } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import lotesSeed from "./lotes-seed.json";
+import {
+  DISCLAIMER_DEFAULT,
+  TERMINOS_DEFAULT,
+  PRIVACIDAD_DEFAULT,
+} from "../src/lib/legal-templates";
 
 const prisma = new PrismaClient();
 
@@ -33,7 +38,8 @@ async function main() {
   await prisma.proyectoConfig.create({
     data: {
       nombre: "Fraccionamiento Ixmegallo",
-      ubicacion: "Acayucan, Veracruz, México",
+      ubicacion:
+        "Calle Ixmegallo, entrando por Ignacio Zaragoza, esquina calle Ixmegallo, rumbo a Cobanal, Acayucan, Veracruz. A 5 minutos de la Unidad Deportiva Vicente Obregón Velard.",
       moneda: "MXN",
       descripcion:
         "Fraccionamiento en Acayucan, Veracruz. A 100 metros de la calle pavimentada y a 10 minutos del centro de Acayucan, con crecimiento urbano cercano y financiamiento directo sin intereses.",
@@ -44,6 +50,10 @@ async function main() {
       tasaInteres: 0,
       reservaMinima: 5000,
       plazoReservaDias: 3,
+      whatsapp: "9241122354",
+      disclaimer: DISCLAIMER_DEFAULT,
+      terminosCondiciones: TERMINOS_DEFAULT,
+      avisoPrivacidad: PRIVACIDAD_DEFAULT,
     },
   });
 

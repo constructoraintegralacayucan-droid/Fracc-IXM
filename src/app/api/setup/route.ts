@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import lotesSeed from "@/lib/lotes-seed.json";
+import {
+  DISCLAIMER_DEFAULT,
+  TERMINOS_DEFAULT,
+  PRIVACIDAD_DEFAULT,
+} from "@/lib/legal-templates";
 import type { EstatusLote, TipoPago } from "@prisma/client";
 
 type SeedLote = {
@@ -48,7 +53,8 @@ export async function GET(request: NextRequest) {
   await prisma.proyectoConfig.create({
     data: {
       nombre: "Fraccionamiento Ixmegallo",
-      ubicacion: "Acayucan, Veracruz, México",
+      ubicacion:
+        "Calle Ixmegallo, entrando por Ignacio Zaragoza, esquina calle Ixmegallo, rumbo a Cobanal, Acayucan, Veracruz. A 5 minutos de la Unidad Deportiva Vicente Obregón Velard.",
       moneda: "MXN",
       descripcion:
         "Fraccionamiento en Acayucan, Veracruz. A 100 metros de la calle pavimentada y a 10 minutos del centro de Acayucan, con crecimiento urbano cercano y financiamiento directo sin intereses.",
@@ -59,6 +65,10 @@ export async function GET(request: NextRequest) {
       tasaInteres: 0,
       reservaMinima: 5000,
       plazoReservaDias: 3,
+      whatsapp: "9241122354",
+      disclaimer: DISCLAIMER_DEFAULT,
+      terminosCondiciones: TERMINOS_DEFAULT,
+      avisoPrivacidad: PRIVACIDAD_DEFAULT,
     },
   });
 

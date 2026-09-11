@@ -47,6 +47,32 @@ export async function getStats() {
   };
 }
 
+export async function getGaleriaImagenes() {
+  return prisma.imagenGaleria.findMany({ orderBy: { orden: "asc" } });
+}
+
+export async function getTestimoniosAprobados() {
+  return prisma.testimonio.findMany({
+    where: { estatus: "APROBADO" },
+    orderBy: { createdAt: "desc" },
+    take: 9,
+  });
+}
+
+export async function getTestimonioDeCliente(clienteId: string) {
+  return prisma.testimonio.findFirst({
+    where: { clienteId },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getTestimoniosTodos() {
+  return prisma.testimonio.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { cliente: true },
+  });
+}
+
 export async function getPrecioDesde() {
   const min = await prisma.lote.aggregate({
     where: { estatus: "DISPONIBLE" },

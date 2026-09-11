@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-export function SiteFooter() {
+export function SiteFooter({
+  ubicacion,
+  whatsapp,
+}: {
+  ubicacion: string;
+  whatsapp: string | null;
+}) {
   return (
     <footer
       id="contacto"
@@ -22,9 +28,9 @@ export function SiteFooter() {
 
         <div className="text-sm text-sand-300">
           <p className="mb-3 font-semibold text-sand-100">Contacto</p>
-          <p>Acayucan, Veracruz, México</p>
-          <p className="mt-1">ventas@terravista.mx</p>
-          <p className="mt-1">+52 924 000 0000</p>
+          <p className="max-w-xs">{ubicacion}</p>
+          <p className="mt-2">constructoraintegral_acayucan@hotmail.com</p>
+          {whatsapp && <p className="mt-1">Tel. / WhatsApp: {whatsapp}</p>}
         </div>
 
         <div className="text-sm text-sand-300">
@@ -48,6 +54,16 @@ export function SiteFooter() {
             <li>
               <Link href="/admin/login" className="hover:text-gold-400">
                 Acceso administrador
+              </Link>
+            </li>
+            <li>
+              <Link href="/terminos" className="hover:text-gold-400">
+                Términos y Condiciones
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacidad" className="hover:text-gold-400">
+                Aviso de Privacidad
               </Link>
             </li>
           </ul>

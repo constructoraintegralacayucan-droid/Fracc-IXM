@@ -88,6 +88,7 @@ model Cliente {
   nombre       String
   telefono     String?
   lotes        Lote[]
+  testimonios  Testimonio[]
   createdAt    DateTime @default(now())
 }
 
@@ -127,6 +128,34 @@ model Reserva {
   @@index([estatus])
 }
 
+model ImagenGaleria {
+  id        String   @id @default(cuid())
+  dataUrl   String
+  orden     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([orden])
+}
+
+enum EstatusTestimonio {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+model Testimonio {
+  id        String            @id @default(cuid())
+  cliente   Cliente?          @relation(fields: [clienteId], references: [id])
+  clienteId String?
+  nombre    String
+  mensaje   String
+  calificacion Int            @default(5)
+  estatus   EstatusTestimonio @default(PENDIENTE)
+  createdAt DateTime          @default(now())
+
+  @@index([estatus])
+}
+
 model AdminUser {
   id           String     @id @default(cuid())
   email        String     @unique
@@ -152,5 +181,9 @@ model ProyectoConfig {
   ofertaActiva      Boolean   @default(false)
   ofertaTitulo      String?
   ofertaFin         DateTime?
+  disclaimer          String  @default("")
+  terminosCondiciones String  @default("")
+  avisoPrivacidad     String  @default("")
+  whatsapp            String?
   updatedAt         DateTime  @updatedAt
 }
