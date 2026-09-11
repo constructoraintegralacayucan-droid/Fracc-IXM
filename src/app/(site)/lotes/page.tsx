@@ -50,6 +50,10 @@ export default async function LotesPage() {
         Selecciona un lote disponible para ver su precio, simular tu
         financiamiento y enviar tu solicitud de apartado.
       </p>
+      <p className="mt-2 max-w-2xl text-sm text-forest-700/60">
+        Calles del fraccionamiento: Ixmegayo, Panamá, Nicaragua, Honduras,
+        Colombia, Costa Rica, Venezuela y El Salvador.
+      </p>
 
       <div className="mt-10">
         <LoteMap
