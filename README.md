@@ -51,10 +51,16 @@ datos) antes de usar esto en producción.
   - `(protected)/lotes` — edición de estatus/precio/comprador por lote.
   - `(protected)/reservas` — cola de solicitudes de apartado del sitio
     público (confirmar/cancelar).
-- `src/proxy.ts` — protege `/admin/*` (reemplaza al antiguo `middleware.ts`
-  en Next.js 16).
+  - `(protected)/lotes/[id]` — asignar/crear cuenta de cliente para un
+    lote, definir su plan de pagos, y registrar/eliminar pagos.
+- `src/app/cliente` — portal del comprador:
+  - `(auth)/login` — login del cliente (cuenta separada del admin).
+  - `(protected)/dashboard` — "mi lote": estado de cuenta detallado,
+    saldo, próxima cuota y aviso de atraso, solo de sus propios lotes.
+- `src/proxy.ts` — protege `/admin/*` y `/cliente/*` (reemplaza al antiguo
+  `middleware.ts` en Next.js 16).
 - `prisma/schema.prisma` — modelo de datos (Manzana, Lote, Reserva,
-  AdminUser, ProyectoConfig).
+  AdminUser, ProyectoConfig, Cliente, Pago).
 - `prisma/seed.ts` + `prisma/lotes-seed.json` — carga los datos reales
   extraídos de `Expedientes_Ixmegallo_septiembre_2026.xlsx`.
 
@@ -70,6 +76,15 @@ datos) antes de usar esto en producción.
   `Reserva` en estatus `PENDIENTE` que el admin debe confirmar o cancelar
   desde `/admin/reservas`. Cancelar libera el lote de vuelta a
   `DISPONIBLE`.
+- **Cuentas de clientes y pagos**: desde `/admin/lotes/[id]` el admin crea
+  una cuenta de cliente (correo + contraseña temporal) y la asigna a un
+  lote (un mismo cliente puede tener varios lotes), define el plan
+  (número de pagos, monto por pago, fecha de la primera cuota) y va
+  registrando cada pago recibido. `lib/pagos.ts` calcula automáticamente
+  cuántas cuotas debieron pagarse a la fecha, cuántas van pagadas, y si
+  hay atraso (en cuotas y en días). El cliente ve todo esto — y solo
+  esto, nunca los lotes de otros compradores — en `/cliente/dashboard`
+  tras iniciar sesión en `/cliente/login`.
 
 ## Despliegue en producción (Vercel + Neon)
 
