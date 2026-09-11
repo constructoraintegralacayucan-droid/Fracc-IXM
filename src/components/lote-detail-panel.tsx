@@ -1,0 +1,260 @@
+"use client";
+
+import { useActionState, useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { calcularFinanciamiento, formatoMoneda } from "@/lib/financiamiento";
+import { crearReserva, type CrearReservaState } from "@/app/(site)/lotes/actions";
+import type { ProyectoConfigPlano } from "./lote-map";
+
+export type LotePlano = {
+  clave: string;
+  numero: number;
+  manzanaNumero: number;
+  precio: number;
+  estatus: "DISPONIBLE" | "APARTADO" | "VENDIDO";
+};
+
+const ESTATUS_LABEL: Record<LotePlano["estatus"], string> = {
+  DISPONIBLE: "Disponible",
+  APARTADO: "Apartado",
+  VENDIDO: "Vendido",
+};
+
+const ESTATUS_BADGE: Record<LotePlano["estatus"], string> = {
+  DISPONIBLE: "bg-forest-100 text-forest-800",
+  APARTADO: "bg-gold-400/25 text-sand-900",
+  VENDIDO: "bg-stone-ink/10 text-stone-ink/60",
+};
+
+const initialState: CrearReservaState = { ok: false, message: "" };
+
+export function LoteDetailPanel({
+  lote,
+  config,
+  onClose,
+}: {
+  lote: LotePlano;
+  config: ProyectoConfigPlano;
+  onClose: () => void;
+}) {
+  const inicialMinima = Math.round(
+    (lote.precio * config.inicialMinimoPct) / 100
+  );
+  const [inicial, setInicial] = useState(inicialMinima);
+  const [plazoMeses, setPlazoMeses] = useState(config.plazosMeses[0]);
+  const [tipoPago, setTipoPago] = useState<"CONTADO" | "CREDITO">("CONTADO");
+
+  const resultado = useMemo(
+    () =>
+      calcularFinanciamiento({
+        precio: lote.precio,
+        inicial: tipoPago === "CONTADO" ? lote.precio : inicial,
+        plazoMeses: tipoPago === "CONTADO" ? 0 : plazoMeses,
+        tasaInteresAnual: config.tasaInteres,
+      }),
+    [lote.precio, inicial, plazoMeses, tipoPago, config.tasaInteres]
+  );
+
+  const [state, formAction] = useActionState(crearReserva, initialState);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <button
+        aria-label="Cerrar"
+        onClick={onClose}
+        className="absolute inset-0 bg-forest-950/50 backdrop-blur-sm"
+      />
+
+      <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-sand-50 p-6 shadow-2xl sm:rounded-3xl sm:p-8">
+        <div className="mb-5 flex items-start justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-forest-700/60">
+              Manzana {lote.manzanaNumero} · Lote {lote.numero}
+            </p>
+            <h3 className="mt-1 font-display text-2xl font-semibold text-forest-900">
+              Clave {lote.clave}
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-forest-700 hover:bg-forest-900/5"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+
+        <span
+          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${ESTATUS_BADGE[lote.estatus]}`}
+        >
+          {ESTATUS_LABEL[lote.estatus]}
+        </span>
+
+        <p className="mt-4 font-display text-3xl font-semibold text-forest-900">
+          {formatoMoneda(lote.precio, config.moneda)}
+        </p>
+
+        {lote.estatus !== "DISPONIBLE" ? (
+          <div className="mt-8 rounded-2xl bg-forest-900/5 p-6 text-sm text-forest-800">
+            Este lote ya está{" "}
+            {lote.estatus === "APARTADO" ? "apartado" : "vendido"}. Explora
+            otros lotes disponibles en el mapa o contáctanos para conocer
+            opciones similares.
+          </div>
+        ) : (
+          <>
+            <div className="mt-6 flex gap-2 rounded-full bg-forest-900/5 p-1 text-sm">
+              <button
+                onClick={() => setTipoPago("CONTADO")}
+                className={`flex-1 rounded-full py-2 font-medium transition ${
+                  tipoPago === "CONTADO"
+                    ? "bg-forest-800 text-sand-50"
+                    : "text-forest-800"
+                }`}
+              >
+                Contado
+              </button>
+              <button
+                onClick={() => setTipoPago("CREDITO")}
+                className={`flex-1 rounded-full py-2 font-medium transition ${
+                  tipoPago === "CREDITO"
+                    ? "bg-forest-800 text-sand-50"
+                    : "text-forest-800"
+                }`}
+              >
+                Crédito
+              </button>
+            </div>
+
+            {tipoPago === "CREDITO" && (
+              <div className="mt-5 space-y-5">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-forest-800">
+                    Inicial (mínimo {config.inicialMinimoPct}%:{" "}
+                    {formatoMoneda(inicialMinima, config.moneda)})
+                  </label>
+                  <input
+                    type="range"
+                    min={inicialMinima}
+                    max={lote.precio}
+                    step={500}
+                    value={inicial}
+                    onChange={(e) => setInicial(Number(e.target.value))}
+                    className="w-full accent-forest-700"
+                  />
+                  <p className="mt-1 font-semibold text-forest-900">
+                    {formatoMoneda(inicial, config.moneda)}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-forest-800">
+                    Plazo
+                  </label>
+                  <select
+                    value={plazoMeses}
+                    onChange={(e) => setPlazoMeses(Number(e.target.value))}
+                    className="w-full rounded-xl border border-forest-800/20 bg-sand-50 px-3.5 py-2.5 text-sm text-forest-900"
+                  >
+                    {config.plazosMeses.map((p) => (
+                      <option key={p} value={p}>
+                        {p} meses
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="rounded-2xl bg-forest-900 p-5 text-sand-100">
+                  <p className="text-xs uppercase tracking-wide text-sand-300">
+                    Cuota mensual
+                  </p>
+                  <p className="font-display text-3xl font-semibold text-sand-50">
+                    {formatoMoneda(resultado.cuotaMensual, config.moneda)}
+                  </p>
+                  <p className="mt-1 text-xs text-sand-300">
+                    A financiar: {formatoMoneda(resultado.aFinanciar, config.moneda)} ·
+                    Sin intereses
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <form action={formAction} className="mt-7 space-y-4">
+              <input type="hidden" name="clave" value={lote.clave} />
+              <input type="hidden" name="planTipoPago" value={tipoPago} />
+              {tipoPago === "CREDITO" && (
+                <>
+                  <input type="hidden" name="plazoMeses" value={plazoMeses} />
+                  <input type="hidden" name="inicialMonto" value={inicial} />
+                </>
+              )}
+
+              <p className="text-sm font-semibold text-forest-900">
+                Aparta este lote
+              </p>
+              <div className="grid gap-3">
+                <input
+                  name="nombre"
+                  required
+                  placeholder="Nombre completo"
+                  className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+                />
+                <input
+                  name="telefono"
+                  required
+                  placeholder="Teléfono / WhatsApp"
+                  className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+                />
+                <input
+                  name="correo"
+                  type="email"
+                  placeholder="Correo (opcional)"
+                  className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+                />
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-forest-700/70">
+                    Monto de apartado (mínimo{" "}
+                    {formatoMoneda(config.reservaMinima, config.moneda)})
+                  </label>
+                  <input
+                    name="montoReserva"
+                    type="number"
+                    min={config.reservaMinima}
+                    defaultValue={config.reservaMinima}
+                    required
+                    className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+                  />
+                </div>
+              </div>
+
+              <SubmitButton />
+
+              {state.message && (
+                <p
+                  className={`text-sm ${
+                    state.ok ? "text-forest-700" : "text-red-700"
+                  }`}
+                >
+                  {state.message}
+                </p>
+              )}
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full rounded-full bg-gold-500 py-3 text-sm font-semibold text-forest-950 transition hover:bg-gold-400 disabled:opacity-60"
+    >
+      {pending ? "Enviando..." : "Solicitar apartado"}
+    </button>
+  );
+}

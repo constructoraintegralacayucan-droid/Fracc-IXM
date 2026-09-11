@@ -1,0 +1,69 @@
+import Link from "next/link";
+import { requireAdmin } from "@/lib/require-admin";
+import { logoutAdmin } from "../actions";
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await requireAdmin();
+
+  return (
+    <div className="flex min-h-screen bg-sand-100/60">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-forest-900/10 bg-forest-950 px-5 py-7 text-sand-100 sm:flex">
+        <p className="font-display text-xl font-semibold text-sand-50">
+          Terravista
+        </p>
+        <p className="mt-0.5 text-xs text-sand-400">Panel administrador</p>
+
+        <nav className="mt-10 flex flex-col gap-1 text-sm">
+          <NavLink href="/admin/dashboard">Dashboard</NavLink>
+          <NavLink href="/admin/lotes">Lotes</NavLink>
+          <NavLink href="/admin/reservas">Reservas</NavLink>
+        </nav>
+
+        <div className="mt-auto pt-8 text-xs text-sand-400">
+          <p className="text-sand-200">{session.nombre}</p>
+          <p className="mt-0.5">{session.email}</p>
+          <form action={logoutAdmin} className="mt-4">
+            <button className="rounded-full border border-sand-100/20 px-4 py-2 text-xs font-medium text-sand-100 hover:border-sand-100/50">
+              Cerrar sesión
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <div className="flex-1">
+        <header className="flex items-center justify-between border-b border-forest-900/10 bg-sand-50 px-5 py-4 sm:hidden">
+          <p className="font-display text-lg font-semibold text-forest-900">
+            Terravista Admin
+          </p>
+          <form action={logoutAdmin}>
+            <button className="text-xs font-medium text-forest-700 underline">
+              Salir
+            </button>
+          </form>
+        </header>
+        <main className="p-5 sm:p-10">{children}</main>
+      </div>
+    </div>
+  );
+}
+
+function NavLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-lg px-3.5 py-2.5 text-sand-200 transition hover:bg-sand-50/10 hover:text-sand-50"
+    >
+      {children}
+    </Link>
+  );
+}
