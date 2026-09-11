@@ -90,8 +90,17 @@ datos) antes de usar esto en producción.
 
 1. **Base de datos — Neon (Postgres serverless, capa gratuita)**
    - Crea una cuenta en https://neon.tech y un proyecto nuevo.
-   - Copia el **connection string pooled** (el que dice `-pooler` en el host;
-     es el recomendado para funciones serverless como las de Vercel).
+   - En el diálogo "Connect to your database" copia **dos** connection
+     strings distintos (usa el toggle "Connection pooling" para alternar
+     entre ambos):
+     - Con el toggle **activado** (host con `-pooler`) → este es
+       `DATABASE_URL`, el que usa la app en cada request.
+     - Con el toggle **desactivado** (host sin `-pooler`) → este es
+       `DIRECT_URL`, solo para migraciones. Es obligatorio: las
+       migraciones de Prisma fallan con error `P1002` (tiempo de espera
+       agotado al adquirir un bloqueo) si intentas correrlas contra la
+       conexión pooled, porque esa pasa por PgBouncer en modo
+       transacción y no soporta bloqueos de sesión.
 
 2. **Vercel**
    - En https://vercel.com → **Add New → Project** → importa el repo
@@ -101,7 +110,10 @@ datos) antes de usar esto en producción.
      `prisma migrate deploy && next build`, así que las migraciones se
      aplican solas en cada deploy).
    - En **Environment Variables** agrega:
-     - `DATABASE_URL` → el connection string pooled de Neon.
+     - `DATABASE_URL` → el connection string **pooled** de Neon (con
+       `-pooler`).
+     - `DIRECT_URL` → el connection string **directo** de Neon (sin
+       `-pooler`).
      - `AUTH_SECRET` → un valor aleatorio largo. Puedes generarlo con
        `openssl rand -base64 32`.
    - Dale **Deploy**.
