@@ -11,7 +11,7 @@ import {
   desasignarCliente,
 } from "@/app/admin/actions";
 
-export const metadata = { title: "Detalle de lote | Terravista Admin" };
+export const metadata = { title: "Detalle de lote | Terranova Admin" };
 
 function toDateInputValue(date: Date | null) {
   if (!date) return "";

@@ -1,38 +1,12 @@
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-sand-200/70 bg-sand-50/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-800 text-sand-100">
-            <svg
-              viewBox="0 0 24 24"
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.6}
-            >
-              <path
-                d="M4 20V10.5L12 4l8 6.5V20"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M9 20v-6h6v6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <span className="leading-tight">
-            <span className="block font-display text-xl font-semibold tracking-wide text-forest-900">
-              Terravista
-            </span>
-            <span className="block text-[10px] font-medium uppercase tracking-[0.15em] text-forest-700/60">
-              by Constructora Integral Acayucan
-            </span>
-          </span>
+        <Link href="/">
+          <Logo />
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-forest-800 sm:flex">

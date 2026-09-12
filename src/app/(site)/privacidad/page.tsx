@@ -1,6 +1,6 @@
 import { getProyectoConfig } from "@/lib/data";
 
-export const metadata = { title: "Aviso de Privacidad | Terravista" };
+export const metadata = { title: "Aviso de Privacidad | Terranova" };
 export const dynamic = "force-dynamic";
 
 export default async function PrivacidadPage() {

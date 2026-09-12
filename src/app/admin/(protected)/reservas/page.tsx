@@ -2,7 +2,7 @@ import { getReservasTodas } from "@/lib/data";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { confirmarReserva, cancelarReserva } from "@/app/admin/actions";
 
-export const metadata = { title: "Reservas | Terravista Admin" };
+export const metadata = { title: "Reservas | Terranova Admin" };
 
 const ESTATUS_BADGE: Record<string, string> = {
   PENDIENTE: "bg-gold-400/25 text-sand-900",

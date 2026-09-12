@@ -1,13 +1,13 @@
 {
-  "name": "Terravista - Fraccionamiento Ixmegallo",
-  "short_name": "Terravista",
-  "description": "Lotes en venta en Fraccionamiento Ixmegallo, Acayucan, Veracruz. Financiamiento directo sin intereses.",
+  "name": "Terranova - Fraccionamiento Ixmegallo",
+  "short_name": "Terranova",
+  "description": "Terranova, tu futuro en buen terreno. Lotes en venta en Fraccionamiento Ixmegallo, Acayucan, Veracruz. Financiamiento directo sin intereses.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#faf6ec",
-  "theme_color": "#17281f",
+  "background_color": "#f6f4ec",
+  "theme_color": "#1b3a2f",
   "lang": "es-MX",
   "icons": [
     {

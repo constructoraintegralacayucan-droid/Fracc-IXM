@@ -2,7 +2,7 @@ import { getProyectoConfig, getGaleriaImagenes } from "@/lib/data";
 import { ConfigForm } from "@/components/config-form";
 import { GaleriaUploader } from "@/components/galeria-uploader";
 
-export const metadata = { title: "Configuración | Terravista Admin" };
+export const metadata = { title: "Configuración | Terranova Admin" };
 
 function toDatetimeLocal(date: Date | null) {
   if (!date) return "";

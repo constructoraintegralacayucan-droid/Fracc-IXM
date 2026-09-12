@@ -1,4 +1,4 @@
-export const metadata = { title: "Pago no completado | Terravista" };
+export const metadata = { title: "Pago no completado | Terranova" };
 
 export default async function PagoFallidoPage({
   searchParams,

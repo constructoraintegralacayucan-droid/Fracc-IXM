@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/logo";
 
 export function SiteFooter({
   ubicacion,
@@ -14,15 +15,18 @@ export function SiteFooter({
     >
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-3">
         <div>
-          <p className="font-display text-2xl font-semibold text-sand-50">
-            Terravista
-          </p>
-          <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-sand-400">
+          <div className="flex items-center gap-2.5">
+            <LogoMark className="h-9 w-9 text-sand-50" />
+            <p className="font-display text-2xl font-bold uppercase tracking-[0.08em] text-sand-50">
+              Terranova
+            </p>
+          </div>
+          <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.15em] text-sand-400">
             by Constructora Integral Acayucan
           </p>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-sand-300">
-            Fraccionamiento Ixmegallo — Acayucan, Veracruz. Financiamiento
-            directo, sin intereses.
+            Tu futuro, en buen terreno. Fraccionamiento Ixmegallo — Acayucan,
+            Veracruz. Financiamiento directo, sin intereses.
           </p>
         </div>
 
@@ -70,7 +74,7 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t border-sand-100/10 py-5 text-center text-xs text-sand-400">
-        © {new Date().getFullYear()} Terravista. Todos los derechos
+        © {new Date().getFullYear()} Terranova. Todos los derechos
         reservados.
       </div>
     </footer>

@@ -1,34 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --color-forest-950: #101d16;
-  --color-forest-900: #17281f;
-  --color-forest-800: #1f3629;
-  --color-forest-700: #2b4a38;
-  --color-forest-600: #3a6049;
-  --color-forest-500: #4d7a5d;
-  --color-forest-400: #6f9878;
-  --color-forest-300: #9cbca6;
-  --color-forest-200: #c8dccd;
-  --color-forest-100: #e4efe6;
+  --color-forest-950: #0e2019;
+  --color-forest-900: #1b3a2f;
+  --color-forest-800: #234a3c;
+  --color-forest-700: #2f5f4d;
+  --color-forest-600: #3d7a63;
+  --color-forest-500: #4f957b;
+  --color-forest-400: #6fac93;
+  --color-forest-300: #9cc4b0;
+  --color-forest-200: #c8dfd2;
+  --color-forest-100: #e5f0ea;
 
-  --color-sand-950: #241f16;
-  --color-sand-900: #362e1f;
-  --color-sand-800: #4d4128;
-  --color-sand-700: #6b5a37;
-  --color-sand-600: #8c7748;
-  --color-sand-500: #af9860;
-  --color-sand-400: #c9b183;
-  --color-sand-300: #ded0ab;
-  --color-sand-200: #ede3ca;
-  --color-sand-100: #f5efe0;
-  --color-sand-50: #faf6ec;
+  --color-sage-600: #57694a;
+  --color-sage-500: #6b7f5b;
+  --color-sage-400: #8a9b78;
+  --color-sage-300: #aab99b;
+  --color-sage-200: #ccd7bf;
 
-  --color-gold-600: #9c7a3c;
-  --color-gold-500: #b8944f;
-  --color-gold-400: #cba86a;
+  --color-sand-950: #221d16;
+  --color-sand-900: #362f21;
+  --color-sand-800: #4f4730;
+  --color-sand-700: #6c6140;
+  --color-sand-600: #8a7c52;
+  --color-sand-500: #a4966a;
+  --color-sand-400: #bdb28c;
+  --color-sand-300: #d3ccae;
+  --color-sand-200: #e4dfcc;
+  --color-sand-100: #efece0;
+  --color-sand-50: #f6f4ec;
 
-  --color-stone-ink: #221f18;
+  --color-gold-600: #a3854f;
+  --color-gold-500: #c9a96b;
+  --color-gold-400: #d9c08f;
+
+  --color-stone-ink: #2d2d2d;
 
   --background: var(--color-sand-50);
   --foreground: var(--color-stone-ink);
@@ -48,6 +54,12 @@
   --color-forest-300: var(--color-forest-300);
   --color-forest-200: var(--color-forest-200);
   --color-forest-100: var(--color-forest-100);
+
+  --color-sage-600: var(--color-sage-600);
+  --color-sage-500: var(--color-sage-500);
+  --color-sage-400: var(--color-sage-400);
+  --color-sage-300: var(--color-sage-300);
+  --color-sage-200: var(--color-sage-200);
 
   --color-sand-950: var(--color-sand-950);
   --color-sand-900: var(--color-sand-900);
@@ -77,5 +89,5 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-display), serif;
+  font-family: var(--font-display), sans-serif;
 }

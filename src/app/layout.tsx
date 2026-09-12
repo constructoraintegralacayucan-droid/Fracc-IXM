@@ -1,23 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Montserrat, Lato } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import "./globals.css";
 
-const bodyFont = Inter({
+const bodyFont = Lato({
   variable: "--font-body",
+  weight: ["400", "700"],
   subsets: ["latin"],
 });
 
-const displayFont = Cormorant_Garamond({
+const displayFont = Montserrat({
   variable: "--font-display",
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Terravista by Constructora Integral Acayucan",
+  title: "Terranova by Constructora Integral Acayucan",
   description:
-    "Fraccionamiento Ixmegallo en Acayucan, Veracruz. Financiamiento directo sin intereses.",
+    "Terranova — Tu futuro, en buen terreno. Fraccionamiento Ixmegallo en Acayucan, Veracruz. Financiamiento directo sin intereses.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#17281f",
+  themeColor: "#1b3a2f",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
