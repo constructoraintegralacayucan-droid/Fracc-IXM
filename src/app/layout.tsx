@@ -16,7 +16,7 @@ const displayFont = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Terranova by Constructora Integral Acayucan",
+  title: "Terranova App by Constructora Integral Acayucan",
   description:
     "Terranova — Tu futuro, en buen terreno. Fraccionamiento Ixmegallo en Acayucan, Veracruz. Financiamiento directo sin intereses.",
   manifest: "/manifest.webmanifest",
@@ -26,6 +26,9 @@ export const metadata: Metadata = {
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    title: "Terranova App",
   },
 };
 
