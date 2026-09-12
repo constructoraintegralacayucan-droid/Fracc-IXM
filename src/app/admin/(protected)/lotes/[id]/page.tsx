@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLotePorId } from "@/lib/data";
-import { calcularEstadoCuenta } from "@/lib/pagos";
+import { calcularEstadoCuenta, precioVentaEfectivo } from "@/lib/pagos";
+import { PlanPagoForm } from "@/components/plan-pago-form";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { AsignarClienteForm } from "@/components/asignar-cliente-form";
 import {
-  actualizarPlanPago,
   actualizarPreciosLote,
   registrarPago,
   eliminarPago,
@@ -30,9 +30,24 @@ export default async function AdminLoteDetailPage({
   if (!lote) notFound();
   const config = lote.desarrollo;
 
+  // Si ya existe un plan de pagos, es una venta a crédito aunque el
+  // campo "tipoPago" no se haya actualizado todavía.
+  const tipoPagoEfectivo = lote.numPagosTotal ? "CREDITO" : lote.tipoPago;
+  const precioVenta = precioVentaEfectivo(
+    {
+      tipoPago: tipoPagoEfectivo,
+      precioContado: lote.precioContado ? Number(lote.precioContado) : null,
+      precioCredito: lote.precioCredito ? Number(lote.precioCredito) : null,
+    },
+    {
+      precioContadoDefault: Number(config.precioContadoDefault),
+      precioCreditoDefault: Number(config.precioCreditoDefault),
+    }
+  );
+
   const estado = calcularEstadoCuenta(
     {
-      precio: Number(lote.precio),
+      precio: precioVenta,
       anticipo: Number(lote.anticipo),
       numPagosTotal: lote.numPagosTotal,
       montoPagoMensual: lote.montoPagoMensual
@@ -62,7 +77,9 @@ export default async function AdminLoteDetailPage({
           Lote {lote.clave}
         </h1>
         <p className="mt-1 text-sm text-forest-700/70">
-          Manzana {lote.manzana.numero} · {formatoMoneda(Number(lote.precio), config.moneda)} ·{" "}
+          Manzana {lote.manzana.numero} ·{" "}
+          {formatoMoneda(precioVenta, config.moneda)}
+          {tipoPagoEfectivo === "CONTADO" ? " de contado" : " a crédito"} ·{" "}
           {lote.estatus}
         </p>
       </div>
@@ -182,55 +199,25 @@ export default async function AdminLoteDetailPage({
         <h2 className="font-display text-lg font-semibold text-forest-900">
           Plan de pagos
         </h2>
-        <form
-          action={actualizarPlanPago}
-          className="mt-4 grid gap-3 sm:grid-cols-3"
-        >
-          <input type="hidden" name="loteId" value={lote.id} />
-          <div>
-            <label className="mb-1 block text-xs font-medium text-forest-700/70">
-              Número de pagos
-            </label>
-            <input
-              name="numPagosTotal"
-              type="number"
-              min={1}
-              defaultValue={lote.numPagosTotal ?? ""}
-              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-forest-700/70">
-              Monto por pago
-            </label>
-            <input
-              name="montoPagoMensual"
-              type="number"
-              min={0}
-              step="0.01"
-              defaultValue={
-                lote.montoPagoMensual ? Number(lote.montoPagoMensual) : ""
-              }
-              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-forest-700/70">
-              Fecha de inicio
-            </label>
-            <input
-              name="fechaInicioPagos"
-              type="date"
-              defaultValue={toDateInputValue(lote.fechaInicioPagos)}
-              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
-            />
-          </div>
-          <div className="sm:col-span-3">
-            <button className="rounded-full bg-forest-800 px-4 py-2 text-xs font-semibold text-sand-50 hover:bg-forest-700">
-              Guardar plan
-            </button>
-          </div>
-        </form>
+        <p className="mt-1 text-sm text-forest-700/70">
+          Para ventas a crédito. Se calcula sobre el precio a crédito de
+          este lote.
+        </p>
+        <div className="mt-4">
+          <PlanPagoForm
+            loteId={lote.id}
+            precioVenta={Number(
+              lote.precioCredito ?? config.precioCreditoDefault
+            )}
+            anticipo={Number(lote.anticipo)}
+            moneda={config.moneda}
+            numPagosTotal={lote.numPagosTotal}
+            montoPagoMensual={
+              lote.montoPagoMensual ? Number(lote.montoPagoMensual) : null
+            }
+            fechaInicioPagos={toDateInputValue(lote.fechaInicioPagos)}
+          />
+        </div>
       </section>
 
       <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
@@ -320,12 +307,13 @@ export default async function AdminLoteDetailPage({
                 <th className="px-4 py-2.5 font-semibold">Método</th>
                 <th className="px-4 py-2.5 font-semibold">Registró</th>
                 <th className="px-4 py-2.5 font-semibold" />
+                <th className="px-4 py-2.5 font-semibold" />
               </tr>
             </thead>
             <tbody>
               {lote.pagos.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-4 text-forest-700/60">
+                  <td colSpan={7} className="px-4 py-4 text-forest-700/60">
                     Sin pagos registrados todavía.
                   </td>
                 </tr>
@@ -343,6 +331,16 @@ export default async function AdminLoteDetailPage({
                   <td className="px-4 py-2.5">{p.metodo}</td>
                   <td className="px-4 py-2.5 text-forest-700/60">
                     {p.registradoPor ?? "—"}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <a
+                      href={`/api/recibos/${p.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-gold-600 hover:underline"
+                    >
+                      Recibo
+                    </a>
                   </td>
                   <td className="px-4 py-2.5">
                     <form action={eliminarPago}>

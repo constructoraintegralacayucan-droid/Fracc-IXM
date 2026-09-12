@@ -78,9 +78,12 @@ export async function actualizarLote(formData: FormData) {
   if (!lote) return;
 
   // "Contado" es la vía rápida para lotes pagados de una sola vez: no
-  // requiere crear cuenta de cliente ni plan de pagos, solo se marca como
-  // saldado con el precio guardado en este mismo formulario.
-  const precioFinal = precio ?? Number(lote.precio);
+  // requiere crear cuenta de cliente ni plan de pagos, se marca como
+  // saldado con el precio público de contado (el mismo que vio el
+  // comprador), no con el precio interno heredado del Excel.
+  const precioContadoFinal = Number(
+    lote.precioContado ?? lote.desarrollo.precioContadoDefault
+  );
 
   await prisma.lote.update({
     where: { id: loteId },
@@ -97,7 +100,7 @@ export async function actualizarLote(formData: FormData) {
         ? { anticipo: 0, saldo: 0, apartadoMonto: 0 }
         : {}),
       ...(tipoPago === "CONTADO" && estatus !== "DISPONIBLE"
-        ? { anticipo: precioFinal, saldo: 0 }
+        ? { anticipo: precioContadoFinal, saldo: 0 }
         : {}),
     },
   });

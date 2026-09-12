@@ -4,7 +4,7 @@ import {
   getNumerosLotesDeManzana,
   getTestimonioDeCliente,
 } from "@/lib/data";
-import { calcularEstadoCuenta } from "@/lib/pagos";
+import { calcularEstadoCuenta, precioVentaEfectivo } from "@/lib/pagos";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { TestimonioForm } from "@/components/testimonio-form";
 import { PagarCuotaButton } from "@/components/pagar-cuota-button";
@@ -48,9 +48,28 @@ export default async function ClienteDashboardPage() {
           const numerosManzana = await getNumerosLotesDeManzana(
             lote.manzanaId
           );
+          const tipoPagoEfectivo = lote.numPagosTotal
+            ? "CREDITO"
+            : lote.tipoPago;
+          const precioVenta = precioVentaEfectivo(
+            {
+              tipoPago: tipoPagoEfectivo,
+              precioContado: lote.precioContado
+                ? Number(lote.precioContado)
+                : null,
+              precioCredito: lote.precioCredito
+                ? Number(lote.precioCredito)
+                : null,
+            },
+            {
+              precioContadoDefault: Number(lote.desarrollo.precioContadoDefault),
+              precioCreditoDefault: Number(lote.desarrollo.precioCreditoDefault),
+            }
+          );
+
           const estado = calcularEstadoCuenta(
             {
-              precio: Number(lote.precio),
+              precio: precioVenta,
               anticipo: Number(lote.anticipo),
               numPagosTotal: lote.numPagosTotal,
               montoPagoMensual: lote.montoPagoMensual
@@ -121,7 +140,7 @@ export default async function ClienteDashboardPage() {
                 <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
                   <Stat
                     label="Precio del lote"
-                    value={formatoMoneda(Number(lote.precio), lote.desarrollo.moneda)}
+                    value={formatoMoneda(precioVenta, lote.desarrollo.moneda)}
                   />
                   <Stat
                     label="Total pagado"
@@ -220,6 +239,72 @@ export default async function ClienteDashboardPage() {
                               </td>
                             </tr>
                           ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {lote.pagos.length > 0 && (
+                  <div className="mt-8">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-forest-700/60">
+                      Historial de pagos registrados
+                    </p>
+                    <div className="overflow-x-auto rounded-xl border border-forest-900/10">
+                      <table className="w-full min-w-[480px] text-left text-sm">
+                        <thead>
+                          <tr className="border-b border-forest-900/10 text-xs uppercase text-forest-700/60">
+                            <th className="px-4 py-2.5 font-semibold">
+                              Fecha
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              Cuota
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              Monto
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              Método
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold" />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...lote.pagos]
+                            .sort(
+                              (a, b) =>
+                                b.fecha.getTime() - a.fecha.getTime()
+                            )
+                            .map((p) => (
+                              <tr
+                                key={p.id}
+                                className="border-b border-forest-900/5 last:border-0"
+                              >
+                                <td className="px-4 py-2.5">
+                                  {formatoFecha(p.fecha)}
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  {p.numeroCuota ?? "—"}
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  {formatoMoneda(
+                                    Number(p.monto),
+                                    lote.desarrollo.moneda
+                                  )}
+                                </td>
+                                <td className="px-4 py-2.5">{p.metodo}</td>
+                                <td className="px-4 py-2.5">
+                                  <a
+                                    href={`/api/recibos/${p.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-semibold text-gold-600 hover:underline"
+                                  >
+                                    Descargar recibo
+                                  </a>
+                                </td>
+                              </tr>
+                            ))}
                         </tbody>
                       </table>
                     </div>

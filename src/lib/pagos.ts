@@ -6,6 +6,26 @@ export type PlanPagoLote = {
   fechaInicioPagos: Date | null;
 };
 
+/**
+ * El precio de venta real de un lote es el público (contado o crédito,
+ * según cómo se esté vendiendo), no el precio interno heredado del Excel
+ * — así el estado de cuenta siempre corre contra el mismo número que vio
+ * el comprador.
+ */
+export function precioVentaEfectivo(
+  lote: {
+    tipoPago: "CONTADO" | "CREDITO" | null;
+    precioContado: number | null;
+    precioCredito: number | null;
+  },
+  desarrollo: { precioContadoDefault: number; precioCreditoDefault: number }
+): number {
+  if (lote.tipoPago === "CONTADO") {
+    return lote.precioContado ?? desarrollo.precioContadoDefault;
+  }
+  return lote.precioCredito ?? desarrollo.precioCreditoDefault;
+}
+
 export type PagoRegistrado = {
   monto: number;
   fecha: Date;
