@@ -6,7 +6,7 @@ export const TERMINOS_DEFAULT = `Términos y Condiciones
 Última actualización: [fecha]
 
 1. Objeto
-Estos Términos y Condiciones regulan el uso del sitio web de Terranova, operado por Constructora Integral Acayucan ("la Constructora"), así como el proceso de apartado, compra y financiamiento de lotes en los fraccionamientos aquí promocionados.
+Estos Términos y Condiciones regulan el uso del sitio web de Terranova App, operado por Constructora Integral Acayucan ("la Constructora"), así como el proceso de apartado, compra y financiamiento de lotes en los fraccionamientos aquí promocionados.
 
 2. Del apartado de lotes
 El apartado de un lote a través del sitio no constituye una compraventa. Es una solicitud que la Constructora debe confirmar. El monto de apartado, el plazo para completar el pago o firmar el contrato correspondiente, y las condiciones para su devolución o retención en caso de cancelación, serán las que la Constructora comunique al cliente al confirmar el apartado.

@@ -1,7 +1,7 @@
 import { getLotesConManzana } from "@/lib/data";
 import { AdminLotesTable } from "@/components/admin-lotes-table";
 
-export const metadata = { title: "Lotes | Terranova Admin" };
+export const metadata = { title: "Lotes | Terranova App Admin" };
 
 export default async function AdminLotesPage() {
   const lotes = await getLotesConManzana();

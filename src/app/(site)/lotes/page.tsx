@@ -2,7 +2,7 @@ import { getManzanasConLotes, getProyectoConfig } from "@/lib/data";
 import { LoteMap } from "@/components/lote-map";
 
 export const metadata = {
-  title: "Mapa de lotes | Terranova - Fraccionamiento Ixmegallo",
+  title: "Mapa de lotes | Terranova App - Fraccionamiento Ixmegallo",
 };
 
 export const dynamic = "force-dynamic";

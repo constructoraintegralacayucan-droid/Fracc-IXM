@@ -12,7 +12,7 @@ import { PagarCuotaButton } from "@/components/pagar-cuota-button";
 import { conektaHabilitado } from "@/lib/conekta";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Mi lote | Terranova" };
+export const metadata = { title: "Mi lote | Terranova App" };
 
 export default async function ClienteDashboardPage() {
   const session = await requireCliente();

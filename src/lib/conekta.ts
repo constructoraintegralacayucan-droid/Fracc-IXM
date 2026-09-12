@@ -37,7 +37,7 @@ export async function crearCheckoutHospedado(
   const body = {
     currency: "MXN",
     customer_info: {
-      name: params.nombre || "Cliente Terranova",
+      name: params.nombre || "Cliente Terranova App",
       email: params.correo || undefined,
       phone: params.telefono || undefined,
     },

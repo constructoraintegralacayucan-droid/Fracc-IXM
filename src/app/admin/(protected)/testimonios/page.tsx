@@ -2,7 +2,7 @@ import { getTestimoniosTodos } from "@/lib/data";
 import { formatoFecha } from "@/lib/financiamiento";
 import { aprobarTestimonio, rechazarTestimonio } from "@/app/admin/actions";
 
-export const metadata = { title: "Testimonios | Terranova Admin" };
+export const metadata = { title: "Testimonios | Terranova App Admin" };
 
 const ESTATUS_BADGE: Record<string, string> = {
   PENDIENTE: "bg-gold-400/25 text-sand-900",

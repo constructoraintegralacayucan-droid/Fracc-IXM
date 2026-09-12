@@ -1,7 +1,7 @@
 import { getStats, getResumenPorManzana } from "@/lib/data";
 import { formatoMoneda } from "@/lib/financiamiento";
 
-export const metadata = { title: "Dashboard | Terranova Admin" };
+export const metadata = { title: "Dashboard | Terranova App Admin" };
 
 export default async function AdminDashboardPage() {
   const [stats, resumen] = await Promise.all([

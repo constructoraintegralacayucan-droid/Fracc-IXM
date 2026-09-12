@@ -40,7 +40,7 @@ export function Logo({
       <LogoMark className={markClassName ?? "h-9 w-9 text-forest-900"} />
       <span className="leading-tight">
         <span className="block font-display text-xl font-bold uppercase tracking-[0.08em] text-forest-900">
-          Terranova
+          Terranova App
         </span>
         {subtitle && (
           <span className="block text-[10px] font-medium uppercase tracking-[0.15em] text-forest-700/60">

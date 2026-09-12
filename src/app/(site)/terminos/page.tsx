@@ -1,6 +1,6 @@
 import { getProyectoConfig } from "@/lib/data";
 
-export const metadata = { title: "Términos y Condiciones | Terranova" };
+export const metadata = { title: "Términos y Condiciones | Terranova App" };
 export const dynamic = "force-dynamic";
 
 export default async function TerminosPage() {
