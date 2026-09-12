@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import { calcularFinanciamiento, formatoMoneda } from "@/lib/financiamiento";
 
+const PRECIO_MINIMO_SIMULADOR = 110_000;
+const PRECIO_MAXIMO_SIMULADOR = 200_000;
+
 export function GenericCalculator({
   precioBase,
   inicialMinimoPct,
@@ -14,7 +17,9 @@ export function GenericCalculator({
   plazos: number[];
   plazoRecomendado: number;
 }) {
-  const [precio, setPrecio] = useState(precioBase);
+  const [precio, setPrecio] = useState(
+    Math.max(precioBase, PRECIO_MINIMO_SIMULADOR)
+  );
   const inicialMinima = useMemo(
     () => Math.round((precio * inicialMinimoPct) / 100),
     [precio, inicialMinimoPct]
@@ -44,8 +49,8 @@ export function GenericCalculator({
           </label>
           <input
             type="range"
-            min={50000}
-            max={150000}
+            min={PRECIO_MINIMO_SIMULADOR}
+            max={PRECIO_MAXIMO_SIMULADOR}
             step={1000}
             value={precio}
             onChange={(e) => {
