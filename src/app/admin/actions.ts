@@ -223,6 +223,32 @@ export async function actualizarPlanPago(formData: FormData) {
   revalidatePath(`/admin/lotes/${loteId}`);
 }
 
+export async function actualizarPreciosLote(formData: FormData) {
+  await requireAdmin();
+
+  const loteId = String(formData.get("loteId") ?? "");
+  if (!loteId) return;
+
+  const precioContadoRaw = String(formData.get("precioContado") ?? "").trim();
+  const precioCreditoRaw = String(formData.get("precioCredito") ?? "").trim();
+  const precioContado = precioContadoRaw ? Number(precioContadoRaw) : null;
+  const precioCredito = precioCreditoRaw ? Number(precioCreditoRaw) : null;
+
+  const lote = await prisma.lote.update({
+    where: { id: loteId },
+    data: {
+      precioContado:
+        precioContado !== null && precioContado > 0 ? precioContado : null,
+      precioCredito:
+        precioCredito !== null && precioCredito > 0 ? precioCredito : null,
+    },
+    include: { desarrollo: true },
+  });
+
+  revalidatePath(`/admin/lotes/${loteId}`);
+  revalidatePath(`/${lote.desarrollo.slug}/lotes`);
+}
+
 export async function registrarPago(formData: FormData) {
   const admin = await requireAdmin();
 
@@ -291,6 +317,12 @@ export async function actualizarConfig(
   const nombre = String(formData.get("nombre") ?? "").trim();
   const ubicacion = String(formData.get("ubicacion") ?? "").trim();
   const descripcion = String(formData.get("descripcion") ?? "").trim();
+  const precioContadoDefault = Number(
+    formData.get("precioContadoDefault") ?? 0
+  );
+  const precioCreditoDefault = Number(
+    formData.get("precioCreditoDefault") ?? 0
+  );
   const inicialMinimoPct = Number(formData.get("inicialMinimoPct") ?? 20);
   const plazoMaxPublico = Number(formData.get("plazoMaxPublico") ?? 24);
   const plazoRecomendado = Number(formData.get("plazoRecomendado") ?? 12);
@@ -311,6 +343,12 @@ export async function actualizarConfig(
   if (!nombre || !ubicacion) {
     return { ok: false, message: "Nombre y ubicación son obligatorios." };
   }
+  if (precioContadoDefault <= 0 || precioCreditoDefault <= 0) {
+    return {
+      ok: false,
+      message: "Los precios de contado y crédito deben ser mayores a cero.",
+    };
+  }
 
   await prisma.desarrollo.update({
     where: { id: config.id },
@@ -318,6 +356,8 @@ export async function actualizarConfig(
       nombre,
       ubicacion,
       descripcion,
+      precioContadoDefault,
+      precioCreditoDefault,
       inicialMinimoPct,
       plazoMaxPublico,
       plazoRecomendado,

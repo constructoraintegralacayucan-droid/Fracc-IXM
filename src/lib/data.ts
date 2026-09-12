@@ -109,12 +109,29 @@ export async function getTestimoniosTodos(desarrolloId: string) {
   });
 }
 
+/**
+ * Precio "desde" que se muestra en la portada: el menor precio de
+ * contado real entre los lotes disponibles (su propio precioContado, o
+ * el valor por defecto del desarrollo si no tienen uno propio).
+ */
 export async function getPrecioDesde(desarrolloId: string) {
-  const min = await prisma.lote.aggregate({
-    where: { desarrolloId, estatus: "DISPONIBLE" },
-    _min: { precio: true },
-  });
-  return Number(min._min.precio ?? 0);
+  const [desarrollo, lotes] = await Promise.all([
+    prisma.desarrollo.findUnique({
+      where: { id: desarrolloId },
+      select: { precioContadoDefault: true },
+    }),
+    prisma.lote.findMany({
+      where: { desarrolloId, estatus: "DISPONIBLE" },
+      select: { precioContado: true },
+    }),
+  ]);
+
+  const defaultPrecio = Number(desarrollo?.precioContadoDefault ?? 0);
+  const precios = lotes.map((l) =>
+    l.precioContado != null ? Number(l.precioContado) : defaultPrecio
+  );
+
+  return precios.length > 0 ? Math.min(...precios) : defaultPrecio;
 }
 
 export async function getResumenPorManzana(desarrolloId: string) {

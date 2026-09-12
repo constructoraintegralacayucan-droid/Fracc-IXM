@@ -70,6 +70,11 @@ model Lote {
   numero             Int
   clave              String
   precio             Decimal       @db.Decimal(12, 2)
+  // Precios públicos de venta (contado / financiado). Si son NULL, se usa
+  // el valor por defecto del desarrollo — así no hay que tocar lote por
+  // lote, salvo alguno que se quiera ofrecer distinto.
+  precioContado      Decimal?      @db.Decimal(12, 2)
+  precioCredito      Decimal?      @db.Decimal(12, 2)
   areaM2             Float?
   frenteM             Float?
   fondoM              Float?
@@ -230,6 +235,11 @@ model Desarrollo {
   descripcion       String    @default("")
   imagenPortada     String?
   inicialMinimoPct  Float     @default(20)
+  // Precios públicos por defecto para lotes que no tengan su propio
+  // precioContado/precioCredito. Cambiar esto actualiza el precio
+  // mostrado en todos los lotes de golpe, sin editarlos uno por uno.
+  precioContadoDefault Decimal @default(85000) @db.Decimal(12, 2)
+  precioCreditoDefault Decimal @default(120000) @db.Decimal(12, 2)
   plazosMeses       Int[]     @default([6, 12, 18, 24, 36, 48, 60, 72, 84, 96])
   plazoMaxPublico   Int       @default(24)
   plazoRecomendado  Int       @default(12)

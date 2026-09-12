@@ -68,6 +68,8 @@ export default async function AdminConfiguracionPage({
             nombre: config.nombre,
             ubicacion: config.ubicacion,
             descripcion: config.descripcion,
+            precioContadoDefault: Number(config.precioContadoDefault),
+            precioCreditoDefault: Number(config.precioCreditoDefault),
             inicialMinimoPct: config.inicialMinimoPct,
             plazoMaxPublico: config.plazoMaxPublico,
             plazoRecomendado: config.plazoRecomendado,

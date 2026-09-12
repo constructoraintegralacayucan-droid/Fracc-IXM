@@ -14,6 +14,8 @@ export type ConfigPlano = {
   nombre: string;
   ubicacion: string;
   descripcion: string;
+  precioContadoDefault: number;
+  precioCreditoDefault: number;
   inicialMinimoPct: number;
   plazoMaxPublico: number;
   plazoRecomendado: number;
@@ -92,6 +94,44 @@ export function ConfigForm({ config }: { config: ConfigPlano }) {
               name="disclaimer"
               defaultValue={config.disclaimer}
               rows={2}
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <h2 className="font-display text-lg font-semibold text-forest-900">
+          Precios de venta
+        </h2>
+        <p className="mt-1 text-sm text-forest-700/70">
+          Precio que ve el público al elegir un lote disponible, para todos
+          los lotes de este desarrollo. Si quieres que un lote en particular
+          tenga otro precio, edítalo desde su propia página en{" "}
+          <span className="whitespace-nowrap">Lotes → Cliente y pagos.</span>
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              Precio de contado
+            </label>
+            <input
+              name="precioContadoDefault"
+              type="number"
+              min={0}
+              defaultValue={config.precioContadoDefault}
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              Precio a crédito (financiado)
+            </label>
+            <input
+              name="precioCreditoDefault"
+              type="number"
+              min={0}
+              defaultValue={config.precioCreditoDefault}
               className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
             />
           </div>

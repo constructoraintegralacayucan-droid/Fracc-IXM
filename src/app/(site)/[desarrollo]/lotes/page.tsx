@@ -42,7 +42,12 @@ export default async function LotesPage({
           manzanaNumero: m.numero,
           disponible,
           numero: disponible ? l.numero : null,
-          precio: disponible ? Number(l.precio) : null,
+          precioContado: disponible
+            ? Number(l.precioContado ?? config.precioContadoDefault)
+            : null,
+          precioCredito: disponible
+            ? Number(l.precioCredito ?? config.precioCreditoDefault)
+            : null,
         };
       }),
     };

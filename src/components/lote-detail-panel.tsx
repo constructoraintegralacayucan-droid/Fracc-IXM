@@ -14,7 +14,8 @@ export type LotePlano = {
   manzanaNumero: number;
   disponible: boolean;
   numero: number | null;
-  precio: number | null;
+  precioContado: number | null;
+  precioCredito: number | null;
 };
 
 const initialState: CrearReservaState = { ok: false, message: "" };
@@ -32,8 +33,14 @@ export function LoteDetailPanel({
   desarrolloSlug: string;
   onClose: () => void;
 }) {
-  const precio = lote.precio ?? 0;
-  const inicialMinima = Math.round((precio * config.inicialMinimoPct) / 100);
+  const precioContado = lote.precioContado ?? 0;
+  const precioCredito = lote.precioCredito ?? 0;
+  const [tipoPago, setTipoPago] = useState<"CONTADO" | "CREDITO">("CONTADO");
+  const precio = tipoPago === "CONTADO" ? precioContado : precioCredito;
+
+  const inicialMinima = Math.round(
+    (precioCredito * config.inicialMinimoPct) / 100
+  );
   const [inicial, setInicial] = useState(inicialMinima);
   const plazosDisponibles =
     config.plazosMeses.length > 0 ? config.plazosMeses : [config.plazoRecomendado];
@@ -41,17 +48,16 @@ export function LoteDetailPanel({
     ? config.plazoRecomendado
     : plazosDisponibles[0];
   const [plazoMeses, setPlazoMeses] = useState(plazoInicial);
-  const [tipoPago, setTipoPago] = useState<"CONTADO" | "CREDITO">("CONTADO");
 
   const resultado = useMemo(
     () =>
       calcularFinanciamiento({
-        precio,
-        inicial: tipoPago === "CONTADO" ? precio : inicial,
-        plazoMeses: tipoPago === "CONTADO" ? 0 : plazoMeses,
+        precio: precioCredito,
+        inicial,
+        plazoMeses,
         tasaInteresAnual: config.tasaInteres,
       }),
-    [precio, inicial, plazoMeses, tipoPago, config.tasaInteres]
+    [precioCredito, inicial, plazoMeses, config.tasaInteres]
   );
 
   const [state, formAction] = useActionState(crearReserva, initialState);
@@ -129,7 +135,7 @@ export function LoteDetailPanel({
               <input
                 type="range"
                 min={inicialMinima}
-                max={precio}
+                max={precioCredito}
                 step={500}
                 value={inicial}
                 onChange={(e) => setInicial(Number(e.target.value))}

@@ -6,6 +6,7 @@ import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { AsignarClienteForm } from "@/components/asignar-cliente-form";
 import {
   actualizarPlanPago,
+  actualizarPreciosLote,
   registrarPago,
   eliminarPago,
   desasignarCliente,
@@ -120,6 +121,61 @@ export default async function AdminLoteDetailPage({
             <AsignarClienteForm loteId={lote.id} />
           </div>
         )}
+      </section>
+
+      <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <h2 className="font-display text-lg font-semibold text-forest-900">
+          Precio público de este lote
+        </h2>
+        <p className="mt-1 text-sm text-forest-700/70">
+          Por defecto, este lote muestra el precio general del desarrollo
+          ({formatoMoneda(Number(config.precioContadoDefault), config.moneda)}{" "}
+          de contado /{" "}
+          {formatoMoneda(Number(config.precioCreditoDefault), config.moneda)}{" "}
+          a crédito). Déjalos vacíos para eso, o pon un precio distinto solo
+          para este lote.
+        </p>
+        <form
+          action={actualizarPreciosLote}
+          className="mt-4 grid gap-3 sm:grid-cols-3"
+        >
+          <input type="hidden" name="loteId" value={lote.id} />
+          <div>
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              Precio de contado (opcional)
+            </label>
+            <input
+              name="precioContado"
+              type="number"
+              min={0}
+              placeholder={String(Number(config.precioContadoDefault))}
+              defaultValue={
+                lote.precioContado ? Number(lote.precioContado) : ""
+              }
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              Precio a crédito (opcional)
+            </label>
+            <input
+              name="precioCredito"
+              type="number"
+              min={0}
+              placeholder={String(Number(config.precioCreditoDefault))}
+              defaultValue={
+                lote.precioCredito ? Number(lote.precioCredito) : ""
+              }
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+            />
+          </div>
+          <div className="flex items-end">
+            <button className="w-full rounded-full bg-forest-800 px-4 py-2 text-xs font-semibold text-sand-50 hover:bg-forest-700">
+              Guardar precio
+            </button>
+          </div>
+        </form>
       </section>
 
       <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
