@@ -9,6 +9,9 @@ import {
   destroyAdminSession,
 } from "@/lib/session";
 import { requireAdmin } from "@/lib/require-admin";
+import { calcularEstadoCuenta, precioVentaEfectivo } from "@/lib/pagos";
+import { generarReciboPago } from "@/lib/recibo";
+import { emailHabilitado, enviarCorreo } from "@/lib/email";
 import type { EstatusLote, MetodoPago, TipoPago } from "@prisma/client";
 
 export type LoginState = { ok: boolean; message: string };
@@ -104,17 +107,28 @@ export async function actualizarLote(formData: FormData) {
 }
 
 export async function confirmarReserva(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const reservaId = String(formData.get("reservaId") ?? "");
   if (!reservaId) return;
 
+  const metodoRaw = String(formData.get("metodo") ?? "TRANSFERENCIA");
+  const metodo = (
+    ["EFECTIVO", "TRANSFERENCIA", "DEPOSITO", "TARJETA", "OTRO"].includes(
+      metodoRaw
+    )
+      ? metodoRaw
+      : "TRANSFERENCIA"
+  ) as MetodoPago;
+
   const reserva = await prisma.reserva.findUnique({
     where: { id: reservaId },
-    include: { lote: { include: { desarrollo: true } } },
+    include: { lote: { include: { desarrollo: true, manzana: true } } },
   });
-  if (!reserva) return;
+  if (!reserva || reserva.estatus !== "PENDIENTE") return;
 
-  await prisma.$transaction([
+  const montoReserva = Number(reserva.montoReserva);
+
+  const [, , pago] = await prisma.$transaction([
     prisma.reserva.update({
       where: { id: reservaId },
       data: { estatus: "CONFIRMADA" },
@@ -127,6 +141,17 @@ export async function confirmarReserva(formData: FormData) {
         compradorTelefono: reserva.telefono,
         compradorCorreo: reserva.correo ?? undefined,
         tipoPago: reserva.planTipoPago,
+        apartadoMonto: montoReserva,
+      },
+    }),
+    prisma.pago.create({
+      data: {
+        loteId: reserva.loteId,
+        reservaId: reserva.id,
+        monto: montoReserva,
+        metodo,
+        notas: "Apartado confirmado desde solicitud del sitio",
+        registradoPor: admin.email,
       },
     }),
   ]);
@@ -134,7 +159,84 @@ export async function confirmarReserva(formData: FormData) {
   revalidatePath("/admin/reservas");
   revalidatePath("/admin/lotes");
   revalidatePath("/admin/dashboard");
+  revalidatePath(`/admin/lotes/${reserva.loteId}`);
   revalidatePath(`/${reserva.lote.desarrollo.slug}/lotes`);
+
+  if (reserva.correo) {
+    try {
+      const precioVenta = precioVentaEfectivo(
+        {
+          tipoPago: reserva.planTipoPago,
+          precioContado: reserva.lote.precioContado
+            ? Number(reserva.lote.precioContado)
+            : null,
+          precioCredito: reserva.lote.precioCredito
+            ? Number(reserva.lote.precioCredito)
+            : null,
+        },
+        {
+          precioContadoDefault: Number(
+            reserva.lote.desarrollo.precioContadoDefault
+          ),
+          precioCreditoDefault: Number(
+            reserva.lote.desarrollo.precioCreditoDefault
+          ),
+        }
+      );
+      const estado = calcularEstadoCuenta(
+        {
+          precio: precioVenta,
+          anticipo: 0,
+          numPagosTotal: null,
+          montoPagoMensual: null,
+          fechaInicioPagos: null,
+        },
+        [{ monto: montoReserva, fecha: pago.fecha, numeroCuota: null }]
+      );
+
+      const pdfBytes = await generarReciboPago({
+        folio: pago.id.slice(-10).toUpperCase(),
+        desarrolloNombre: reserva.lote.desarrollo.nombre,
+        loteClave: reserva.lote.clave,
+        manzanaNumero: reserva.lote.manzana.numero,
+        clienteNombre: reserva.nombre,
+        clienteEmail: reserva.correo,
+        numeroCuota: null,
+        monto: montoReserva,
+        metodo,
+        fecha: pago.fecha,
+        notas: pago.notas,
+        registradoPor: pago.registradoPor,
+        moneda: reserva.lote.desarrollo.moneda,
+        totalPagado: estado.totalPagado,
+        saldoPendiente: estado.saldoPendiente,
+        porcentajePagado: estado.porcentajePagado,
+        emitido: new Date(),
+      });
+
+      if (emailHabilitado()) {
+        await enviarCorreo({
+          to: reserva.correo,
+          subject: `Recibo de tu apartado — Lote ${reserva.lote.clave} — ${reserva.lote.desarrollo.nombre}`,
+          html: `
+            <p>Hola ${reserva.nombre},</p>
+            <p>Confirmamos la recepción de tu apartado por el Lote ${reserva.lote.clave} de ${reserva.lote.desarrollo.nombre}. Adjuntamos tu recibo en PDF.</p>
+            <p>Gracias por tu confianza.<br/>${reserva.lote.desarrollo.nombre} — Constructora Integral Acayucan</p>
+          `,
+          adjuntoPdf: {
+            nombre: `recibo-${reserva.lote.clave}-${pago.id.slice(-6)}.pdf`,
+            bytes: pdfBytes,
+          },
+        });
+      } else {
+        console.warn(
+          "Envío de correo no configurado (RESEND_API_KEY / EMAIL_FROM); recibo generado pero no enviado."
+        );
+      }
+    } catch (err) {
+      console.error("No se pudo generar/enviar el recibo del apartado:", err);
+    }
+  }
 }
 
 export type AsignarClienteState = { ok: boolean; message: string };
@@ -331,6 +433,7 @@ export async function actualizarConfig(
   const ofertaFinRaw = String(formData.get("ofertaFin") ?? "");
   const disclaimer = String(formData.get("disclaimer") ?? "").trim();
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const datosBancarios = String(formData.get("datosBancarios") ?? "").trim();
   const terminosCondiciones = String(
     formData.get("terminosCondiciones") ?? ""
   );
@@ -367,6 +470,7 @@ export async function actualizarConfig(
       whatsapp: whatsapp || null,
       terminosCondiciones,
       avisoPrivacidad,
+      datosBancarios,
     },
   });
 

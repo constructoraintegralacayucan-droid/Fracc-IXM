@@ -83,6 +83,7 @@ export default async function AdminConfiguracionPage({
             whatsapp: config.whatsapp ?? "",
             terminosCondiciones: config.terminosCondiciones,
             avisoPrivacidad: config.avisoPrivacidad,
+            datosBancarios: config.datosBancarios,
           }}
         />
       </div>

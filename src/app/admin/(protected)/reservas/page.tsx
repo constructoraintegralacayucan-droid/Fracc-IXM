@@ -44,8 +44,10 @@ export default async function AdminReservasPage({
             Solicitudes de apartado
           </h1>
           <p className="mt-1 text-sm text-forest-700/70">
-            {actual.nombre} — Leads generados desde el sitio público. Confirma
-            o cancela cada solicitud.
+            {actual.nombre} — Leads generados desde el sitio público.
+            Confirma solo cuando ya hayas recibido el dinero del apartado:
+            se registra como pago y se genera su recibo automáticamente
+            (y se envía por correo si el cliente dejó uno).
           </p>
         </div>
         <AdminDesarrolloSwitcher desarrollos={desarrollos} actualSlug={actual.slug} />
@@ -87,9 +89,24 @@ export default async function AdminReservasPage({
             </div>
 
             {r.estatus === "PENDIENTE" && (
-              <div className="flex gap-2">
-                <form action={confirmarReserva}>
+              <div className="flex flex-wrap items-center gap-2">
+                <form
+                  action={confirmarReserva}
+                  className="flex items-center gap-2"
+                >
                   <input type="hidden" name="reservaId" value={r.id} />
+                  <select
+                    name="metodo"
+                    defaultValue="TRANSFERENCIA"
+                    title="¿Cómo recibiste el dinero del apartado?"
+                    className="rounded-full border border-forest-800/20 bg-white px-3 py-2 text-xs"
+                  >
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                    <option value="DEPOSITO">Depósito</option>
+                    <option value="EFECTIVO">Efectivo</option>
+                    <option value="TARJETA">Tarjeta</option>
+                    <option value="OTRO">Otro</option>
+                  </select>
                   <button className="rounded-full bg-forest-800 px-4 py-2 text-xs font-semibold text-sand-50 hover:bg-forest-700">
                     Confirmar
                   </button>
@@ -101,6 +118,17 @@ export default async function AdminReservasPage({
                   </button>
                 </form>
               </div>
+            )}
+
+            {r.estatus === "CONFIRMADA" && r.pagos[0] && (
+              <a
+                href={`/api/recibos/${r.pagos[0].id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-gold-500/50 px-4 py-2 text-xs font-semibold text-gold-600 hover:bg-gold-400/10"
+              >
+                Ver recibo
+              </a>
             )}
           </div>
         ))}

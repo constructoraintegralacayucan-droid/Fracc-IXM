@@ -16,6 +16,7 @@ export type ProyectoConfigPlano = {
   plazoRecomendado: number;
   tasaInteres: number;
   reservaMinima: number;
+  datosBancarios: string;
 };
 
 export function LoteMap({
@@ -82,6 +83,7 @@ export function LoteMap({
 
       {selectedLote && selectedManzana && (
         <LoteDetailPanel
+          key={selectedLote.clave}
           lote={selectedLote}
           disponiblesEnManzana={selectedManzana.disponiblesEnManzana}
           config={config}

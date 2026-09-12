@@ -33,8 +33,13 @@ export function LoteDetailPanel({
   desarrolloSlug: string;
   onClose: () => void;
 }) {
-  const precioContado = lote.precioContado ?? 0;
-  const precioCredito = lote.precioCredito ?? 0;
+  // Se congelan al abrir el panel: al enviar la solicitud de apartado, el
+  // lote pasa a "no disponible" y el precio público deja de mostrarse por
+  // privacidad (ver getLotesConManzana), pero el panel sigue abierto para
+  // mostrar la confirmación — no queremos que el precio se vuelva $0 justo
+  // cuando el cliente más necesita verlo.
+  const [precioContado] = useState(lote.precioContado ?? 0);
+  const [precioCredito] = useState(lote.precioCredito ?? 0);
   const [tipoPago, setTipoPago] = useState<"CONTADO" | "CREDITO">("CONTADO");
   const precio = tipoPago === "CONTADO" ? precioContado : precioCredito;
 
@@ -246,6 +251,21 @@ export function LoteDetailPanel({
             >
               Pagar apartado ahora con tarjeta
             </a>
+          )}
+
+          {state.ok && config.datosBancarios && (
+            <div className="rounded-2xl border border-forest-900/10 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-forest-700/60">
+                O transfiere tu apartado a
+              </p>
+              <p className="mt-2 whitespace-pre-line text-sm text-forest-800">
+                {config.datosBancarios}
+              </p>
+              <p className="mt-2 text-xs text-forest-700/60">
+                Envíanos tu comprobante por WhatsApp para confirmar tu
+                apartado más rápido.
+              </p>
+            </div>
           )}
         </form>
       </div>

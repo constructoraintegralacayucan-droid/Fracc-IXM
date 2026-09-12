@@ -81,6 +81,7 @@ export default async function LotesPage({
             plazoRecomendado: config.plazoRecomendado,
             tasaInteres: config.tasaInteres,
             reservaMinima: Number(config.reservaMinima),
+            datosBancarios: config.datosBancarios,
           }}
         />
       </div>

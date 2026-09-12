@@ -29,6 +29,7 @@ export type ConfigPlano = {
   whatsapp: string;
   terminosCondiciones: string;
   avisoPrivacidad: string;
+  datosBancarios: string;
 };
 
 export function ConfigForm({ config }: { config: ConfigPlano }) {
@@ -135,6 +136,29 @@ export function ConfigForm({ config }: { config: ConfigPlano }) {
               className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
             />
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <h2 className="font-display text-lg font-semibold text-forest-900">
+          Cuenta bancaria para apartados
+        </h2>
+        <p className="mt-1 text-sm text-forest-700/70">
+          Se muestra al cliente justo después de enviar su solicitud de
+          apartado, para que sepa a dónde transferir. Escribe banco, número
+          de cuenta/CLABE y a nombre de quién está (puedes poner varias
+          cuentas, una por línea).
+        </p>
+        <div className="mt-4">
+          <textarea
+            name="datosBancarios"
+            defaultValue={config.datosBancarios}
+            rows={4}
+            placeholder={
+              "BBVA — Cuenta 0123456789 — CLABE 012180001234567890\nA nombre de Constructora Integral Acayucan S.A. de C.V."
+            }
+            className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+          />
         </div>
       </section>
 
