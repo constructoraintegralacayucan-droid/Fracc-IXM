@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "./prisma";
+import { calcularEstadoCuenta, precioVentaEfectivo } from "./pagos";
 
 /** Desarrollos activos, para la pantalla de selección "Terranova". */
 export async function getDesarrollos() {
@@ -56,7 +57,7 @@ export async function getManzanasConLotes(desarrolloId: string) {
 }
 
 export async function getStats(desarrolloId: string) {
-  const [total, disponibles, apartados, vendidos, montos] =
+  const [total, disponibles, apartados, vendidos, montos, desarrollo, lotesVendidos] =
     await Promise.all([
       prisma.lote.count({ where: { desarrolloId } }),
       prisma.lote.count({ where: { desarrolloId, estatus: "DISPONIBLE" } }),
@@ -64,9 +65,46 @@ export async function getStats(desarrolloId: string) {
       prisma.lote.count({ where: { desarrolloId, estatus: "VENDIDO" } }),
       prisma.lote.aggregate({
         where: { desarrolloId },
-        _sum: { precio: true, anticipo: true, saldo: true },
+        _sum: { precio: true, anticipo: true },
+      }),
+      prisma.desarrollo.findUniqueOrThrow({ where: { id: desarrolloId } }),
+      prisma.lote.findMany({
+        where: { desarrolloId, estatus: { not: "DISPONIBLE" } },
+        include: { pagos: true },
       }),
     ]);
+
+  const saldoTotal = lotesVendidos.reduce((acc, lote) => {
+    const tipoPagoEfectivo = lote.numPagosTotal ? "CREDITO" : lote.tipoPago;
+    const precioVenta = precioVentaEfectivo(
+      {
+        tipoPago: tipoPagoEfectivo,
+        precioContado: lote.precioContado ? Number(lote.precioContado) : null,
+        precioCredito: lote.precioCredito ? Number(lote.precioCredito) : null,
+      },
+      {
+        precioContadoDefault: Number(desarrollo.precioContadoDefault),
+        precioCreditoDefault: Number(desarrollo.precioCreditoDefault),
+      }
+    );
+    const estado = calcularEstadoCuenta(
+      {
+        precio: precioVenta,
+        anticipo: Number(lote.anticipo),
+        numPagosTotal: lote.numPagosTotal,
+        montoPagoMensual: lote.montoPagoMensual
+          ? Number(lote.montoPagoMensual)
+          : null,
+        fechaInicioPagos: lote.fechaInicioPagos,
+      },
+      lote.pagos.map((p) => ({
+        monto: Number(p.monto),
+        fecha: p.fecha,
+        numeroCuota: p.numeroCuota,
+      }))
+    );
+    return acc + estado.saldoPendiente;
+  }, 0);
 
   return {
     total,
@@ -75,7 +113,7 @@ export async function getStats(desarrolloId: string) {
     vendidos,
     montoTotal: Number(montos._sum.precio ?? 0),
     anticipoTotal: Number(montos._sum.anticipo ?? 0),
-    saldoTotal: Number(montos._sum.saldo ?? 0),
+    saldoTotal,
   };
 }
 

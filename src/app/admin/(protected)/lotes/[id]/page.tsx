@@ -226,7 +226,7 @@ export default async function AdminLoteDetailPage({
         </h2>
         <form
           action={registrarPago}
-          className="mt-4 grid gap-3 sm:grid-cols-5"
+          className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1.3fr_1fr_auto]"
         >
           <input type="hidden" name="loteId" value={lote.id} />
           <div>
@@ -283,12 +283,12 @@ export default async function AdminLoteDetailPage({
               <option value="OTRO">Otro</option>
             </select>
           </div>
-          <div className="flex items-end">
+          <div className="col-span-2 flex items-end sm:col-span-1">
             <button className="w-full rounded-full bg-gold-500 px-4 py-2.5 text-xs font-semibold text-forest-950 hover:bg-gold-400">
               Registrar
             </button>
           </div>
-          <div className="sm:col-span-5">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-5">
             <input
               name="notas"
               placeholder="Notas (opcional)"

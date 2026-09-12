@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { actualizarLote } from "@/app/admin/actions";
-import { formatoMoneda } from "@/lib/financiamiento";
 
 export type LoteAdminPlano = {
   id: string;
@@ -17,7 +16,6 @@ export type LoteAdminPlano = {
   compradorCorreo: string | null;
   tipoPago: "CONTADO" | "CREDITO" | null;
   anticipo: number;
-  saldo: number;
 };
 
 export function AdminLotesTable({ lotes }: { lotes: LoteAdminPlano[] }) {
@@ -96,7 +94,7 @@ export function AdminLotesTable({ lotes }: { lotes: LoteAdminPlano[] }) {
       </p>
 
       <div className="space-y-3 sm:space-y-0 sm:overflow-x-auto sm:rounded-2xl sm:border sm:border-forest-900/10 sm:bg-sand-50">
-        <div className="hidden text-xs uppercase tracking-wide text-forest-700/70 sm:grid sm:grid-cols-9 sm:gap-2 sm:border-b sm:border-forest-900/10 sm:px-4 sm:py-3">
+        <div className="hidden text-xs uppercase tracking-wide text-forest-700/70 sm:grid sm:grid-cols-8 sm:gap-2 sm:border-b sm:border-forest-900/10 sm:px-4 sm:py-3">
           <div className="font-semibold">Clave</div>
           <div className="font-semibold">Estatus</div>
           <div className="font-semibold">Tipo</div>
@@ -104,7 +102,6 @@ export function AdminLotesTable({ lotes }: { lotes: LoteAdminPlano[] }) {
           <div className="col-span-2 font-semibold">Comprador</div>
           <div className="font-semibold">Teléfono</div>
           <div className="font-semibold">Correo</div>
-          <div className="font-semibold">Saldo</div>
         </div>
 
         {filtrados.map((lote) => (
@@ -154,7 +151,7 @@ function FilaLote({ lote }: { lote: LoteAdminPlano }) {
     <form
       key={key}
       action={actualizarLote}
-      className="grid grid-cols-2 gap-3 rounded-2xl border border-forest-900/10 bg-sand-50 p-4 sm:grid-cols-9 sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:border-b sm:p-0 sm:px-4 sm:py-2.5 sm:last:border-0"
+      className="grid grid-cols-2 gap-3 rounded-2xl border border-forest-900/10 bg-sand-50 p-4 sm:grid-cols-8 sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:border-b sm:p-0 sm:px-4 sm:py-2.5 sm:last:border-0"
     >
       <input type="hidden" name="loteId" value={lote.id} />
       <div className="col-span-2 font-display text-lg font-semibold text-forest-900 sm:col-span-1 sm:text-sm sm:font-medium">
@@ -220,12 +217,6 @@ function FilaLote({ lote }: { lote: LoteAdminPlano }) {
           placeholder="—"
           className="w-full rounded-lg border border-forest-800/20 bg-white px-2 py-2 text-sm sm:py-1.5 sm:text-xs"
         />
-      </Campo>
-
-      <Campo label="Saldo">
-        <p className="text-sm text-forest-700/70 sm:text-xs">
-          {formatoMoneda(lote.saldo)}
-        </p>
       </Campo>
 
       <div className="col-span-2 flex gap-2 pt-1 sm:col-span-2 sm:pt-0">
