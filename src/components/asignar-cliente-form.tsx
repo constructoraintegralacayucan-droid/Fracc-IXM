@@ -9,7 +9,17 @@ import {
 
 const initialState: AsignarClienteState = { ok: false, message: "" };
 
-export function AsignarClienteForm({ loteId }: { loteId: string }) {
+export function AsignarClienteForm({
+  loteId,
+  compradorNombre,
+  compradorTelefono,
+  compradorCorreo,
+}: {
+  loteId: string;
+  compradorNombre?: string | null;
+  compradorTelefono?: string | null;
+  compradorCorreo?: string | null;
+}) {
   const [state, formAction] = useActionState(asignarCliente, initialState);
 
   return (
@@ -19,6 +29,7 @@ export function AsignarClienteForm({ loteId }: { loteId: string }) {
         <input
           name="nombre"
           required
+          defaultValue={compradorNombre ?? ""}
           placeholder="Nombre completo"
           className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
         />
@@ -26,11 +37,13 @@ export function AsignarClienteForm({ loteId }: { loteId: string }) {
           name="email"
           type="email"
           required
+          defaultValue={compradorCorreo ?? ""}
           placeholder="Correo (será su usuario)"
           className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
         />
         <input
           name="telefono"
+          defaultValue={compradorTelefono ?? ""}
           placeholder="Teléfono"
           className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
         />

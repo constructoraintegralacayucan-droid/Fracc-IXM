@@ -60,6 +60,7 @@ export default async function ClienteDashboardPage() {
               precioCredito: lote.precioCredito
                 ? Number(lote.precioCredito)
                 : null,
+              precio: Number(lote.precio),
             },
             {
               precioContadoDefault: Number(lote.desarrollo.precioContadoDefault),

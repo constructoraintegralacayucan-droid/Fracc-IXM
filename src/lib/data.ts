@@ -81,6 +81,7 @@ export async function getStats(desarrolloId: string) {
         tipoPago: tipoPagoEfectivo,
         precioContado: lote.precioContado ? Number(lote.precioContado) : null,
         precioCredito: lote.precioCredito ? Number(lote.precioCredito) : null,
+        precio: Number(lote.precio),
       },
       {
         precioContadoDefault: Number(desarrollo.precioContadoDefault),

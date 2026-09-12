@@ -7,21 +7,35 @@ export type PlanPagoLote = {
 };
 
 /**
- * El precio de venta real de un lote es el público (contado o crédito,
- * según cómo se esté vendiendo), no el precio interno heredado del Excel
- * — así el estado de cuenta siempre corre contra el mismo número que vio
- * el comprador.
+ * El precio contra el que corre el estado de cuenta de un lote.
+ *
+ * - Ventas a crédito (con plan de pagos activo): el precio público de
+ *   crédito de ese lote, o el general del desarrollo si no tiene uno
+ *   propio — es el número que vio el comprador al financiar.
+ * - Ventas de contado: el precio que el admin capturó para ESE lote en
+ *   el campo "Precio" (columna de la tabla de lotes) es el precio total
+ *   de venta acordado; solo se usa el precio público de contado del
+ *   lote si lo dejó definido explícitamente ahí, y el general del
+ *   desarrollo únicamente si tampoco hay un "Precio" capturado.
+ *
+ *   `precio` se omite al confirmar una solicitud de apartado recién
+ *   creada desde el sitio/colaboradores: ahí el comprador ya vio y
+ *   aceptó el precio público, así que ese es el que debe prevalecer en
+ *   vez de un "Precio" heredado que pudiera traer el lote de antes.
  */
 export function precioVentaEfectivo(
   lote: {
     tipoPago: "CONTADO" | "CREDITO" | null;
     precioContado: number | null;
     precioCredito: number | null;
+    precio?: number;
   },
   desarrollo: { precioContadoDefault: number; precioCreditoDefault: number }
 ): number {
   if (lote.tipoPago === "CONTADO") {
-    return lote.precioContado ?? desarrollo.precioContadoDefault;
+    return (
+      lote.precioContado ?? lote.precio ?? desarrollo.precioContadoDefault
+    );
   }
   return lote.precioCredito ?? desarrollo.precioCreditoDefault;
 }

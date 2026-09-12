@@ -38,6 +38,7 @@ export default async function AdminLoteDetailPage({
       tipoPago: tipoPagoEfectivo,
       precioContado: lote.precioContado ? Number(lote.precioContado) : null,
       precioCredito: lote.precioCredito ? Number(lote.precioCredito) : null,
+      precio: Number(lote.precio),
     },
     {
       precioContadoDefault: Number(config.precioContadoDefault),
@@ -135,7 +136,12 @@ export default async function AdminLoteDetailPage({
             <p className="mb-3 text-sm text-forest-700/70">
               Este lote no tiene una cuenta de cliente asignada.
             </p>
-            <AsignarClienteForm loteId={lote.id} />
+            <AsignarClienteForm
+              loteId={lote.id}
+              compradorNombre={lote.compradorNombre}
+              compradorTelefono={lote.compradorTelefono}
+              compradorCorreo={lote.compradorCorreo}
+            />
           </div>
         )}
       </section>
