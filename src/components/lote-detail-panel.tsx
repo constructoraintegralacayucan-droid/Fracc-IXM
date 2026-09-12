@@ -226,6 +226,15 @@ export function LoteDetailPanel({
               {state.message}
             </p>
           )}
+
+          {state.ok && state.checkoutUrl && (
+            <a
+              href={state.checkoutUrl}
+              className="block w-full rounded-full bg-forest-800 py-3 text-center text-sm font-semibold text-sand-50 transition hover:bg-forest-700"
+            >
+              Pagar apartado ahora con tarjeta
+            </a>
+          )}
         </form>
       </div>
     </div>

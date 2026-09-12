@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getProyectoConfig } from "@/lib/data";
+import { crearCheckoutHospedado } from "@/lib/conekta";
+import { getSiteOrigin } from "@/lib/site";
 
 export type CrearReservaState = {
   ok: boolean;
   message: string;
+  checkoutUrl?: string;
 };
 
 export async function crearReserva(
@@ -44,7 +47,7 @@ export async function crearReserva(
   const expiraEn = new Date();
   expiraEn.setDate(expiraEn.getDate() + config.plazoReservaDias);
 
-  await prisma.$transaction([
+  const [reserva] = await prisma.$transaction([
     prisma.reserva.create({
       data: {
         loteId: lote.id,
@@ -72,9 +75,41 @@ export async function crearReserva(
   revalidatePath("/admin/dashboard");
   revalidatePath("/admin/lotes");
 
+  let checkoutUrl: string | undefined;
+  try {
+    const origin = await getSiteOrigin();
+    const checkout = await crearCheckoutHospedado({
+      monto: montoReserva,
+      descripcion: `Apartado lote ${lote.clave} - Fraccionamiento Ixmegallo`,
+      nombre,
+      correo: correo || undefined,
+      telefono,
+      successUrl: `${origin}/pago-exitoso?tipo=reserva`,
+      failureUrl: `${origin}/pago-fallido?tipo=reserva`,
+      metadata: { reservaId: reserva.id, loteClave: lote.clave, tipo: "RESERVA" },
+    });
+
+    await prisma.ordenPago.create({
+      data: {
+        conektaOrderId: checkout.orderId,
+        checkoutUrl: checkout.checkoutUrl,
+        tipo: "RESERVA",
+        monto: montoReserva,
+        loteId: lote.id,
+        reservaId: reserva.id,
+      },
+    });
+
+    checkoutUrl = checkout.checkoutUrl;
+  } catch (err) {
+    console.error("No se pudo crear el checkout de Conekta:", err);
+  }
+
   return {
     ok: true,
-    message:
-      "¡Solicitud enviada! Nuestro equipo se pondrá en contacto contigo para confirmar tu apartado.",
+    message: checkoutUrl
+      ? "¡Solicitud registrada! Puedes pagar tu apartado en línea con tarjeta ahora, o esperar a que nuestro equipo te contacte."
+      : "¡Solicitud enviada! Nuestro equipo se pondrá en contacto contigo para confirmar tu apartado.",
+    checkoutUrl,
   };
 }

@@ -8,6 +8,8 @@ import {
 import { calcularEstadoCuenta } from "@/lib/pagos";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { TestimonioForm } from "@/components/testimonio-form";
+import { PagarCuotaButton } from "@/components/pagar-cuota-button";
+import { conektaHabilitado } from "@/lib/conekta";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mi lote | Terravista" };
@@ -19,6 +21,7 @@ export default async function ClienteDashboardPage() {
     getProyectoConfig(),
     getTestimonioDeCliente(session.sub),
   ]);
+  const pagoEnLineaHabilitado = conektaHabilitado();
 
   if (lotes.length === 0) {
     return (
@@ -150,6 +153,18 @@ export default async function ClienteDashboardPage() {
                     el {formatoFecha(estado.proximaFechaVencimiento)}
                   </p>
                 )}
+
+                {pagoEnLineaHabilitado &&
+                  estado.saldoPendiente > 0 &&
+                  (estado.proximoMontoVencimiento ?? 0) > 0 && (
+                    <PagarCuotaButton
+                      loteId={lote.id}
+                      monto={estado.proximoMontoVencimiento ?? 0}
+                      numeroCuota={
+                        estado.calendario.find((c) => !c.pagada)?.numero
+                      }
+                    />
+                  )}
 
                 {estado.calendario.length > 0 && (
                   <div className="mt-8">

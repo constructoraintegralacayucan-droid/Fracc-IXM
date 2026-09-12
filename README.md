@@ -133,10 +133,73 @@ datos) antes de usar esto en producción.
      implementada todavía).
    - Verifica que `/admin/reservas` reciba las solicitudes reales.
 
+## Pagos en línea con Conekta
+
+El sitio puede cobrar con tarjeta en línea usando **Conekta**, tanto el
+apartado inicial (formulario público en `/lotes`) como las mensualidades
+(portal de cliente). Si no configuras las llaves, el sitio sigue
+funcionando normal (los botones de "pagar con tarjeta" simplemente no
+aparecen y todo se sigue registrando manual desde administración).
+
+1. **Crea tu cuenta en Conekta**
+   - Regístrate en https://panel.conekta.com. Puedes probar todo en
+     **modo de prueba** sin necesidad de trámites.
+   - Para cobrar de verdad (modo en vivo) Conekta te va a pedir RFC y
+     datos de tu empresa (Constructora Integral Acayucan) para activar tu
+     cuenta — es un trámite que solo tú puedes hacer como dueño del
+     negocio.
+
+2. **Obtén tu llave privada**
+   - En el panel de Conekta ve a **Desarrollo → Llaves API**.
+   - Copia la **llave privada** (empieza con `key_...`). Hay una para modo
+     de prueba y otra para modo en vivo — usa la de prueba mientras
+     validas todo, y cambia a la de vivo cuando estés listo para cobrar
+     de verdad.
+
+3. **Variables de entorno**
+   Agrega esto en Vercel (**Settings → Environment Variables**) y en tu
+   `.env` local si quieres probarlo:
+   ```
+   CONEKTA_PRIVATE_KEY="key_xxxxxxxxxxxxxxxxxxxxxxxx"
+   CONEKTA_WEBHOOK_USER="elige-un-usuario"
+   CONEKTA_WEBHOOK_PASS="genera-una-contraseña-larga-y-aleatoria"
+   ```
+   `CONEKTA_WEBHOOK_USER`/`CONEKTA_WEBHOOK_PASS` los inventas tú — son
+   las credenciales que usarás para que Conekta confirme los pagos de
+   forma segura (paso siguiente).
+
+4. **Configura el webhook en Conekta**
+   - En el panel de Conekta ve a **Desarrollo → Webhooks → Agregar
+     webhook**.
+   - Como URL pon (con tus propias credenciales del paso 3, separadas
+     por `:` antes de la `@`):
+     ```
+     https://usuario:contraseña@tudominio.com/api/webhooks/conekta
+     ```
+   - Activa al menos el evento `order.paid` (opcionalmente
+     `order.expired` y `order.declined` para que se marquen los pagos
+     fallidos).
+   - Esto es lo que le confirma a la plataforma que un cobro sí se
+     completó, para registrar el pago automáticamente y (en el caso del
+     apartado) confirmar la reserva.
+
+5. **Qué se cobra en línea**
+   - **Apartado**: al enviar el formulario de "Aparta este lote" en
+     `/lotes`, si Conekta está configurado aparece un botón "Pagar
+     apartado ahora con tarjeta" que lleva a la página de pago segura de
+     Conekta.
+   - **Mensualidades**: en el portal de cliente (`/cliente/dashboard`),
+     si el lote tiene plan de pagos activo aparece un botón "Pagar esta
+     cuota con tarjeta" con el monto de la próxima mensualidad.
+   - En ambos casos, el pago se registra automáticamente en el historial
+     de pagos del lote en cuanto Conekta confirma el cobro (vía webhook).
+     Los pagos en efectivo/transferencia se siguen registrando manual
+     desde `/admin/lotes/[id]` como hasta ahora.
+   - Prueba todo primero en modo de prueba de Conekta (tarjetas de
+     prueba en su documentación) antes de cambiar a la llave en vivo.
+
 ## Pendiente para producción
 
-- Conectar una pasarela de pagos real (Stripe/Culqi/Conekta) — por ahora el
-  apartado/compra es un registro simulado en base de datos.
 - Reemplazar las imágenes/ilustraciones genéricas por fotografía real del
   fraccionamiento y su plano oficial (el DWG/PDF entregado no traía
   coordenadas utilizables para un mapa geográficamente exacto; el mapa
