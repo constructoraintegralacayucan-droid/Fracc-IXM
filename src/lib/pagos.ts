@@ -60,7 +60,6 @@ export function calcularEstadoCuenta(
       ? Math.min(100, Math.round((totalPagado / lote.precio) * 100))
       : 0;
 
-  const cuotasPagadas = pagos.length;
   const tienePlan = Boolean(
     lote.fechaInicioPagos && lote.numPagosTotal && lote.montoPagoMensual
   );
@@ -68,11 +67,21 @@ export function calcularEstadoCuenta(
   const calendario: CuotaCalendario[] = [];
   let cuotasEsperadasHoy = 0;
   let proximaFechaVencimiento: Date | null = null;
+  // Cuántas cuotas completas cubre lo pagado, por monto acumulado (no por
+  // número de pagos registrados): si un mes pagan de más, el excedente
+  // adelanta cuotas futuras; si pagan de menos, no se cuenta como cuota
+  // completa aunque haya un registro de pago.
+  let cuotasPagadas = 0;
 
   if (tienePlan) {
     const inicio = lote.fechaInicioPagos as Date;
     const total = lote.numPagosTotal as number;
     const monto = lote.montoPagoMensual as number;
+
+    cuotasPagadas =
+      monto > 0
+        ? Math.min(total, Math.floor((totalPagosCuotas + 0.01) / monto))
+        : 0;
 
     for (let i = 1; i <= total; i++) {
       const fechaVencimiento = startOfDay(addMonths(inicio, i - 1));

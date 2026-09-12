@@ -15,6 +15,7 @@ export type LoteAdminPlano = {
   compradorNombre: string | null;
   compradorTelefono: string | null;
   compradorCorreo: string | null;
+  tipoPago: "CONTADO" | "CREDITO" | null;
   anticipo: number;
   saldo: number;
 };
@@ -95,11 +96,12 @@ export function AdminLotesTable({ lotes }: { lotes: LoteAdminPlano[] }) {
       </p>
 
       <div className="overflow-x-auto rounded-2xl border border-forest-900/10 bg-sand-50">
-        <table className="w-full min-w-[900px] text-left text-sm">
+        <table className="w-full min-w-[980px] text-left text-sm">
           <thead>
             <tr className="border-b border-forest-900/10 text-xs uppercase tracking-wide text-forest-700/70">
               <th className="px-4 py-3 font-semibold">Clave</th>
               <th className="px-4 py-3 font-semibold">Estatus</th>
+              <th className="px-4 py-3 font-semibold">Tipo</th>
               <th className="px-4 py-3 font-semibold">Precio</th>
               <th className="px-4 py-3 font-semibold">Comprador</th>
               <th className="px-4 py-3 font-semibold">Teléfono</th>
@@ -125,11 +127,27 @@ export function AdminLotesTable({ lotes }: { lotes: LoteAdminPlano[] }) {
 }
 
 function FilaLote({ lote }: { lote: LoteAdminPlano }) {
+  // La key incluye los campos editables: cuando el guardado realmente
+  // cambia los datos, React remonta el formulario con los valores nuevos
+  // en vez de arrastrar los valores que el navegador dejó en el DOM justo
+  // después de enviar (React resetea los campos no controlados del
+  // formulario a su valor original apenas la acción termina).
+  const key = [
+    lote.id,
+    lote.estatus,
+    lote.precio,
+    lote.compradorNombre,
+    lote.compradorTelefono,
+    lote.compradorCorreo,
+    lote.tipoPago,
+  ].join("|");
+
   return (
-    <td colSpan={8} className="p-0">
+    <td colSpan={9} className="p-0">
       <form
+        key={key}
         action={actualizarLote}
-        className="grid grid-cols-8 items-center gap-2 px-4 py-2.5"
+        className="grid grid-cols-9 items-center gap-2 px-4 py-2.5"
       >
         <input type="hidden" name="loteId" value={lote.id} />
         <div className="font-medium text-forest-900">{lote.clave}</div>
@@ -142,6 +160,17 @@ function FilaLote({ lote }: { lote: LoteAdminPlano }) {
           <option value="DISPONIBLE">Disponible</option>
           <option value="APARTADO">Apartado</option>
           <option value="VENDIDO">Vendido</option>
+        </select>
+
+        <select
+          name="tipoPago"
+          defaultValue={lote.tipoPago ?? ""}
+          title="Tipo de pago: marca Contado para saldar el lote sin crear plan de pagos"
+          className="col-span-1 rounded-lg border border-forest-800/20 bg-white px-2 py-1.5 text-xs"
+        >
+          <option value="">Tipo —</option>
+          <option value="CONTADO">Contado</option>
+          <option value="CREDITO">Crédito</option>
         </select>
 
         <input

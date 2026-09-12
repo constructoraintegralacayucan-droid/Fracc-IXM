@@ -9,7 +9,7 @@ import {
   destroyAdminSession,
 } from "@/lib/session";
 import { requireAdmin } from "@/lib/require-admin";
-import type { EstatusLote, MetodoPago } from "@prisma/client";
+import type { EstatusLote, MetodoPago, TipoPago } from "@prisma/client";
 
 export type LoginState = { ok: boolean; message: string };
 
@@ -56,7 +56,13 @@ export async function actualizarLote(formData: FormData) {
 
   const loteId = String(formData.get("loteId") ?? "");
   const estatus = String(formData.get("estatus") ?? "") as EstatusLote;
-  const precio = Number(formData.get("precio") ?? 0);
+  const tipoPagoRaw = String(formData.get("tipoPago") ?? "");
+  const tipoPago = ["CONTADO", "CREDITO"].includes(tipoPagoRaw)
+    ? (tipoPagoRaw as TipoPago)
+    : null;
+  const precioRaw = Number(formData.get("precio") ?? 0);
+  const precio =
+    Number.isFinite(precioRaw) && precioRaw > 0 ? precioRaw : undefined;
   const compradorNombre = String(formData.get("compradorNombre") ?? "").trim();
   const compradorTelefono = String(
     formData.get("compradorTelefono") ?? ""
@@ -65,18 +71,30 @@ export async function actualizarLote(formData: FormData) {
 
   if (!loteId) return;
 
+  const lote = await prisma.lote.findUnique({ where: { id: loteId } });
+  if (!lote) return;
+
+  // "Contado" es la vía rápida para lotes pagados de una sola vez: no
+  // requiere crear cuenta de cliente ni plan de pagos, solo se marca como
+  // saldado con el precio guardado en este mismo formulario.
+  const precioFinal = precio ?? Number(lote.precio);
+
   await prisma.lote.update({
     where: { id: loteId },
     data: {
       estatus: ["DISPONIBLE", "APARTADO", "VENDIDO"].includes(estatus)
         ? estatus
         : undefined,
-      precio: Number.isFinite(precio) && precio > 0 ? precio : undefined,
+      tipoPago,
+      precio,
       compradorNombre: compradorNombre || null,
       compradorTelefono: compradorTelefono || null,
       compradorCorreo: compradorCorreo || null,
       ...(estatus === "DISPONIBLE"
         ? { anticipo: 0, saldo: 0, apartadoMonto: 0 }
+        : {}),
+      ...(tipoPago === "CONTADO" && estatus !== "DISPONIBLE"
+        ? { anticipo: precioFinal, saldo: 0 }
         : {}),
     },
   });

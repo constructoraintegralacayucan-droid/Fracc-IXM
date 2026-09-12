@@ -16,6 +16,7 @@ export default async function AdminLotesPage() {
     compradorNombre: l.compradorNombre,
     compradorTelefono: l.compradorTelefono,
     compradorCorreo: l.compradorCorreo,
+    tipoPago: l.tipoPago,
     anticipo: Number(l.anticipo),
     saldo: Number(l.saldo),
   }));

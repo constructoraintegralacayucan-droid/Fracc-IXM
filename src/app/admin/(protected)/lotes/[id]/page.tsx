@@ -48,7 +48,7 @@ export default async function AdminLoteDetailPage({
     }))
   );
 
-  const siguienteCuotaSugerida = lote.pagos.length + 1;
+  const siguienteCuotaSugerida = estado.cuotasPagadas + 1;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
