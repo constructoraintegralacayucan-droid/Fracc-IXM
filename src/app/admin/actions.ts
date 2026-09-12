@@ -459,6 +459,64 @@ export async function actualizarEstadoDesarrollo(formData: FormData) {
 }
 
 const TIPOS_IMAGEN_PERMITIDOS = ["image/jpeg", "image/png", "image/webp"];
+const MAX_BYTES_IMAGEN_PORTADA = 4 * 1024 * 1024;
+
+export async function subirImagenPortada(
+  _prevState: SubirImagenState,
+  formData: FormData
+): Promise<SubirImagenState> {
+  await requireAdmin();
+
+  const desarrolloId = String(formData.get("desarrolloId") ?? "");
+  const file = formData.get("imagen");
+  if (!desarrolloId) {
+    return { ok: false, message: "Falta el desarrollo." };
+  }
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Selecciona una imagen." };
+  }
+  if (!TIPOS_IMAGEN_PERMITIDOS.includes(file.type)) {
+    return {
+      ok: false,
+      message: "Formato no permitido. Usa JPG, PNG o WEBP.",
+    };
+  }
+  if (file.size > MAX_BYTES_IMAGEN_PORTADA) {
+    return {
+      ok: false,
+      message: "La imagen pesa más de 4MB. Comprímela e intenta de nuevo.",
+    };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
+
+  const desarrollo = await prisma.desarrollo.update({
+    where: { id: desarrolloId },
+    data: { imagenPortada: dataUrl },
+  });
+
+  revalidatePath("/");
+  revalidatePath(`/${desarrollo.slug}`);
+  revalidatePath("/admin/desarrollos");
+
+  return { ok: true, message: "Foto de portada actualizada." };
+}
+
+export async function quitarImagenPortada(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("desarrolloId") ?? "");
+  if (!id) return;
+
+  const desarrollo = await prisma.desarrollo.update({
+    where: { id },
+    data: { imagenPortada: null },
+  });
+
+  revalidatePath("/");
+  revalidatePath(`/${desarrollo.slug}`);
+  revalidatePath("/admin/desarrollos");
+}
 const MAX_BYTES_IMAGEN = 4 * 1024 * 1024;
 
 export type SubirImagenState = { ok: boolean; message: string };
