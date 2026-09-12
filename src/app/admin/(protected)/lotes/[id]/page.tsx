@@ -5,6 +5,7 @@ import { calcularEstadoCuenta, precioVentaEfectivo } from "@/lib/pagos";
 import { PlanPagoForm } from "@/components/plan-pago-form";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { AsignarClienteForm } from "@/components/asignar-cliente-form";
+import { VentaLoteForm } from "@/components/venta-lote-form";
 import {
   actualizarPreciosLote,
   registrarPago,
@@ -64,6 +65,10 @@ export default async function AdminLoteDetailPage({
   );
 
   const siguienteCuotaSugerida = estado.cuotasPagadas + 1;
+  const totalPagosRegistrados = lote.pagos.reduce(
+    (acc, p) => acc + Number(p.monto),
+    0
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -107,6 +112,28 @@ export default async function AdminLoteDetailPage({
           }
         />
       </div>
+
+      <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <h2 className="font-display text-lg font-semibold text-forest-900">
+          Venta
+        </h2>
+        <p className="mt-1 text-sm text-forest-700/70">
+          El monto de venta y los pagos anteriores son la base del estado de
+          cuenta de este lote — corrígelos aquí si algo no cuadra. Los pagos
+          nuevos que vayan llegando de ahora en adelante regístralos abajo en
+          &ldquo;Registrar pago&rdquo; para que quede su fecha y su recibo;
+          esto de aquí es solo lo que ya se había pagado antes.
+        </p>
+        <div className="mt-4">
+          <VentaLoteForm
+            loteId={lote.id}
+            precio={precioVenta}
+            anticipo={Number(lote.anticipo)}
+            totalPagosRegistrados={totalPagosRegistrados}
+            moneda={config.moneda}
+          />
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
         <h2 className="font-display text-lg font-semibold text-forest-900">

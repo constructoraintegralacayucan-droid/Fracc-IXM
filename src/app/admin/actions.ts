@@ -10,6 +10,7 @@ import {
 } from "@/lib/session";
 import { requireAdmin } from "@/lib/require-admin";
 import { calcularEstadoCuenta, precioVentaEfectivo } from "@/lib/pagos";
+import { formatoMoneda } from "@/lib/financiamiento";
 import { generarReciboPago } from "@/lib/recibo";
 import { emailHabilitado, enviarCorreo } from "@/lib/email";
 import type { EstatusLote, MetodoPago, TipoPago } from "@prisma/client";
@@ -345,6 +346,69 @@ export async function actualizarPreciosLote(formData: FormData) {
 
   revalidatePath(`/admin/lotes/${loteId}`);
   revalidatePath(`/${lote.desarrollo.slug}/lotes`);
+}
+
+export type ActualizarVentaState = { ok: boolean; message: string };
+
+export async function actualizarVentaLote(
+  _prevState: ActualizarVentaState,
+  formData: FormData
+): Promise<ActualizarVentaState> {
+  await requireAdmin();
+
+  const loteId = String(formData.get("loteId") ?? "");
+  if (!loteId) return { ok: false, message: "Falta el lote." };
+
+  const precio = Number(formData.get("precio") ?? 0);
+  const anticipo = Number(formData.get("anticipo") ?? 0);
+
+  if (!Number.isFinite(precio) || precio <= 0) {
+    return {
+      ok: false,
+      message: "El monto de venta debe ser mayor a cero.",
+    };
+  }
+  if (!Number.isFinite(anticipo) || anticipo < 0) {
+    return { ok: false, message: "Los pagos anteriores no pueden ser negativos." };
+  }
+
+  const [pagosRegistrados, loteActual] = await Promise.all([
+    prisma.pago.aggregate({ where: { loteId }, _sum: { monto: true } }),
+    prisma.lote.findUnique({ where: { id: loteId } }),
+  ]);
+  if (!loteActual) return { ok: false, message: "El lote no existe." };
+  const totalPagosRegistrados = Number(pagosRegistrados._sum.monto ?? 0);
+
+  if (anticipo + totalPagosRegistrados > precio) {
+    return {
+      ok: false,
+      message:
+        totalPagosRegistrados > 0
+          ? `Los pagos anteriores (${formatoMoneda(anticipo)}) más los pagos ya registrados abajo (${formatoMoneda(totalPagosRegistrados)}) superan el monto de venta. Revisa los montos.`
+          : "Los pagos anteriores no pueden ser mayores al monto de venta. Revisa ambos montos.",
+    };
+  }
+
+  // Para ventas a crédito con plan de pagos, el precio que realmente rige
+  // el estado de cuenta es el precio de crédito del lote, no "precio"
+  // (ver precioVentaEfectivo); para contado es al revés.
+  const esCredito =
+    loteActual.numPagosTotal !== null || loteActual.tipoPago === "CREDITO";
+
+  const lote = await prisma.lote.update({
+    where: { id: loteId },
+    data: esCredito
+      ? { precioCredito: precio, anticipo }
+      : { precio, anticipo },
+    include: { desarrollo: true },
+  });
+
+  revalidatePath(`/admin/lotes/${loteId}`);
+  revalidatePath("/admin/lotes");
+  revalidatePath("/admin/dashboard");
+  revalidatePath(`/${lote.desarrollo.slug}/lotes`);
+
+  return { ok: true, message: "Venta actualizada." };
 }
 
 export async function registrarPago(formData: FormData) {
