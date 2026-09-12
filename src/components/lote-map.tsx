@@ -21,9 +21,11 @@ export type ProyectoConfigPlano = {
 export function LoteMap({
   manzanas,
   config,
+  desarrolloSlug,
 }: {
   manzanas: ManzanaPlano[];
   config: ProyectoConfigPlano;
+  desarrolloSlug: string;
 }) {
   const [selectedClave, setSelectedClave] = useState<string | null>(null);
 
@@ -83,6 +85,7 @@ export function LoteMap({
           lote={selectedLote}
           disponiblesEnManzana={selectedManzana.disponiblesEnManzana}
           config={config}
+          desarrolloSlug={desarrolloSlug}
           onClose={() => setSelectedClave(null)}
         />
       )}

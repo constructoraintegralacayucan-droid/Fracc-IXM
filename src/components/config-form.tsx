@@ -10,6 +10,7 @@ import {
 const initialState: ActualizarConfigState = { ok: false, message: "" };
 
 export type ConfigPlano = {
+  desarrolloId: string;
   nombre: string;
   ubicacion: string;
   descripcion: string;
@@ -33,6 +34,7 @@ export function ConfigForm({ config }: { config: ConfigPlano }) {
 
   return (
     <form action={formAction} className="space-y-10">
+      <input type="hidden" name="desarrolloId" value={config.desarrolloId} />
       <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
         <h2 className="font-display text-lg font-semibold text-forest-900">
           Datos del proyecto

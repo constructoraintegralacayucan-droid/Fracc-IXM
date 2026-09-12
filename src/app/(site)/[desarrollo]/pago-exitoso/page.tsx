@@ -1,10 +1,13 @@
 export const metadata = { title: "Pago recibido | Terranova" };
 
 export default async function PagoExitosoPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ desarrollo: string }>;
   searchParams: Promise<{ tipo?: string }>;
 }) {
+  const { desarrollo } = await params;
   const { tipo } = await searchParams;
   const esCuota = tipo === "cuota";
 
@@ -22,7 +25,7 @@ export default async function PagoExitosoPage({
           : "Registramos tu pago de apartado. Nuestro equipo se pondrá en contacto contigo para los siguientes pasos."}
       </p>
       <a
-        href={esCuota ? "/cliente/dashboard" : "/"}
+        href={esCuota ? "/cliente/dashboard" : `/${desarrollo}`}
         className="mt-8 inline-block rounded-full bg-gold-500 px-6 py-3 text-sm font-semibold text-forest-950 transition hover:bg-gold-400"
       >
         {esCuota ? "Ir a mi cuenta" : "Volver al inicio"}

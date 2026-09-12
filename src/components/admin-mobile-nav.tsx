@@ -7,8 +7,9 @@ const ITEMS = [
   { href: "/admin/dashboard", label: "Inicio" },
   { href: "/admin/lotes", label: "Lotes" },
   { href: "/admin/reservas", label: "Reservas" },
-  { href: "/admin/testimonios", label: "Testimonios" },
+  { href: "/admin/testimonios", label: "Testim." },
   { href: "/admin/configuracion", label: "Ajustes" },
+  { href: "/admin/desarrollos", label: "Desarr." },
 ];
 
 export function AdminMobileNav() {

@@ -72,8 +72,17 @@ export async function enviarTestimonio(
     };
   }
 
+  const lote = await prisma.lote.findFirst({
+    where: { clienteId: session.sub },
+    select: { desarrolloId: true },
+  });
+  if (!lote) {
+    return { ok: false, message: "No tienes ningún lote asignado." };
+  }
+
   await prisma.testimonio.create({
     data: {
+      desarrolloId: lote.desarrolloId,
       clienteId: session.sub,
       nombre: session.nombre,
       mensaje,

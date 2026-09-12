@@ -2,7 +2,6 @@ import { requireCliente } from "@/lib/require-cliente";
 import {
   getLotesDeCliente,
   getNumerosLotesDeManzana,
-  getProyectoConfig,
   getTestimonioDeCliente,
 } from "@/lib/data";
 import { calcularEstadoCuenta } from "@/lib/pagos";
@@ -16,9 +15,8 @@ export const metadata = { title: "Mi lote | Terranova" };
 
 export default async function ClienteDashboardPage() {
   const session = await requireCliente();
-  const [lotes, config, testimonio] = await Promise.all([
+  const [lotes, testimonio] = await Promise.all([
     getLotesDeCliente(session.sub),
-    getProyectoConfig(),
     getTestimonioDeCliente(session.sub),
   ]);
   const pagoEnLineaHabilitado = conektaHabilitado();
@@ -73,7 +71,10 @@ export default async function ClienteDashboardPage() {
               className="overflow-hidden rounded-3xl border border-forest-900/10 bg-sand-50"
             >
               <div className="border-b border-forest-900/10 bg-forest-950 px-6 py-6 text-sand-50 sm:px-8">
-                <p className="text-xs uppercase tracking-[0.2em] text-sand-300">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">
+                  {lote.desarrollo.nombre}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-[0.2em] text-sand-300">
                   Manzana {lote.manzana.numero} · Lote {lote.numero}
                 </p>
                 <h2 className="mt-1 font-display text-2xl font-semibold">
@@ -120,18 +121,18 @@ export default async function ClienteDashboardPage() {
                 <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
                   <Stat
                     label="Precio del lote"
-                    value={formatoMoneda(Number(lote.precio), config.moneda)}
+                    value={formatoMoneda(Number(lote.precio), lote.desarrollo.moneda)}
                   />
                   <Stat
                     label="Total pagado"
-                    value={formatoMoneda(estado.totalPagado, config.moneda)}
+                    value={formatoMoneda(estado.totalPagado, lote.desarrollo.moneda)}
                     tone="forest"
                   />
                   <Stat
                     label="Saldo pendiente"
                     value={formatoMoneda(
                       estado.saldoPendiente,
-                      config.moneda
+                      lote.desarrollo.moneda
                     )}
                   />
                   <Stat
@@ -147,7 +148,7 @@ export default async function ClienteDashboardPage() {
                     <strong>
                       {formatoMoneda(
                         estado.proximoMontoVencimiento ?? 0,
-                        config.moneda
+                        lote.desarrollo.moneda
                       )}
                     </strong>{" "}
                     el {formatoFecha(estado.proximaFechaVencimiento)}
@@ -200,7 +201,7 @@ export default async function ClienteDashboardPage() {
                                 {formatoFecha(c.fechaVencimiento)}
                               </td>
                               <td className="px-4 py-2.5">
-                                {formatoMoneda(c.monto, config.moneda)}
+                                {formatoMoneda(c.monto, lote.desarrollo.moneda)}
                               </td>
                               <td className="px-4 py-2.5">
                                 {c.pagada ? (

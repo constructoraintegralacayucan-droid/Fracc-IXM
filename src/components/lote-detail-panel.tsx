@@ -3,7 +3,10 @@
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { calcularFinanciamiento, formatoMoneda } from "@/lib/financiamiento";
-import { crearReserva, type CrearReservaState } from "@/app/(site)/lotes/actions";
+import {
+  crearReserva,
+  type CrearReservaState,
+} from "@/app/(site)/[desarrollo]/lotes/actions";
 import type { ProyectoConfigPlano } from "./lote-map";
 
 export type LotePlano = {
@@ -20,11 +23,13 @@ export function LoteDetailPanel({
   lote,
   disponiblesEnManzana,
   config,
+  desarrolloSlug,
   onClose,
 }: {
   lote: LotePlano;
   disponiblesEnManzana: number;
   config: ProyectoConfigPlano;
+  desarrolloSlug: string;
   onClose: () => void;
 }) {
   const precio = lote.precio ?? 0;
@@ -168,6 +173,7 @@ export function LoteDetailPanel({
         )}
 
         <form action={formAction} className="mt-7 space-y-4">
+          <input type="hidden" name="desarrolloSlug" value={desarrolloSlug} />
           <input type="hidden" name="clave" value={lote.clave} />
           <input type="hidden" name="planTipoPago" value={tipoPago} />
           {tipoPago === "CREDITO" && (

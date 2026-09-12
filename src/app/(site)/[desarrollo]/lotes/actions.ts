@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getProyectoConfig } from "@/lib/data";
+import { getDesarrolloBySlug } from "@/lib/data";
 import { crearCheckoutHospedado } from "@/lib/conekta";
 import { getSiteOrigin } from "@/lib/site";
 
@@ -16,6 +16,7 @@ export async function crearReserva(
   _prevState: CrearReservaState,
   formData: FormData
 ): Promise<CrearReservaState> {
+  const desarrolloSlug = String(formData.get("desarrolloSlug") ?? "");
   const clave = String(formData.get("clave") ?? "");
   const nombre = String(formData.get("nombre") ?? "").trim();
   const telefono = String(formData.get("telefono") ?? "").trim();
@@ -32,7 +33,14 @@ export async function crearReserva(
     return { ok: false, message: "El monto de reserva no es válido." };
   }
 
-  const lote = await prisma.lote.findUnique({ where: { clave } });
+  const desarrollo = await getDesarrolloBySlug(desarrolloSlug);
+  if (!desarrollo) {
+    return { ok: false, message: "El desarrollo no existe." };
+  }
+
+  const lote = await prisma.lote.findUnique({
+    where: { desarrolloId_clave: { desarrolloId: desarrollo.id, clave } },
+  });
   if (!lote) {
     return { ok: false, message: "El lote no existe." };
   }
@@ -43,9 +51,8 @@ export async function crearReserva(
     };
   }
 
-  const config = await getProyectoConfig();
   const expiraEn = new Date();
-  expiraEn.setDate(expiraEn.getDate() + config.plazoReservaDias);
+  expiraEn.setDate(expiraEn.getDate() + desarrollo.plazoReservaDias);
 
   const [reserva] = await prisma.$transaction([
     prisma.reserva.create({
@@ -70,7 +77,7 @@ export async function crearReserva(
     }),
   ]);
 
-  revalidatePath("/lotes");
+  revalidatePath(`/${desarrolloSlug}/lotes`);
   revalidatePath("/admin/reservas");
   revalidatePath("/admin/dashboard");
   revalidatePath("/admin/lotes");
@@ -80,12 +87,12 @@ export async function crearReserva(
     const origin = await getSiteOrigin();
     const checkout = await crearCheckoutHospedado({
       monto: montoReserva,
-      descripcion: `Apartado lote ${lote.clave} - Fraccionamiento Ixmegallo`,
+      descripcion: `Apartado lote ${lote.clave} - ${desarrollo.nombre}`,
       nombre,
       correo: correo || undefined,
       telefono,
-      successUrl: `${origin}/pago-exitoso?tipo=reserva`,
-      failureUrl: `${origin}/pago-fallido?tipo=reserva`,
+      successUrl: `${origin}/${desarrolloSlug}/pago-exitoso?tipo=reserva`,
+      failureUrl: `${origin}/${desarrolloSlug}/pago-fallido?tipo=reserva`,
       metadata: { reservaId: reserva.id, loteClave: lote.clave, tipo: "RESERVA" },
     });
 

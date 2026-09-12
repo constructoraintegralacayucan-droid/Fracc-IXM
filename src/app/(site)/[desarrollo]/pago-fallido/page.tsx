@@ -1,10 +1,13 @@
 export const metadata = { title: "Pago no completado | Terranova" };
 
 export default async function PagoFallidoPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ desarrollo: string }>;
   searchParams: Promise<{ tipo?: string }>;
 }) {
+  const { desarrollo } = await params;
   const { tipo } = await searchParams;
   const esCuota = tipo === "cuota";
 
@@ -22,7 +25,7 @@ export default async function PagoFallidoPage({
         continúa.
       </p>
       <a
-        href={esCuota ? "/cliente/dashboard" : "/lotes"}
+        href={esCuota ? "/cliente/dashboard" : `/${desarrollo}/lotes`}
         className="mt-8 inline-block rounded-full bg-gold-500 px-6 py-3 text-sm font-semibold text-forest-950 transition hover:bg-gold-400"
       >
         {esCuota ? "Volver a mi cuenta" : "Volver al mapa de lotes"}

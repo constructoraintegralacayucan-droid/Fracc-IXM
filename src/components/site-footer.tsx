@@ -2,12 +2,17 @@ import Link from "next/link";
 import { LogoMark } from "@/components/logo";
 
 export function SiteFooter({
-  ubicacion,
-  whatsapp,
+  desarrollo,
 }: {
-  ubicacion: string;
-  whatsapp: string | null;
-}) {
+  desarrollo?: {
+    slug: string;
+    nombre: string;
+    ubicacion: string;
+    whatsapp: string | null;
+  };
+} = {}) {
+  const base = desarrollo ? `/${desarrollo.slug}` : null;
+
   return (
     <footer
       id="contacto"
@@ -25,31 +30,38 @@ export function SiteFooter({
             by Constructora Integral Acayucan
           </p>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-sand-300">
-            Tu futuro, en buen terreno. Fraccionamiento Ixmegallo — Acayucan,
-            Veracruz. Financiamiento directo, sin intereses.
+            {desarrollo
+              ? `Tu futuro, en buen terreno. ${desarrollo.nombre}. Financiamiento directo, sin intereses.`
+              : "Tu futuro, en buen terreno. Fraccionamientos con financiamiento directo, sin intereses."}
           </p>
         </div>
 
         <div className="text-sm text-sand-300">
           <p className="mb-3 font-semibold text-sand-100">Contacto</p>
-          <p className="max-w-xs">{ubicacion}</p>
+          {desarrollo && <p className="max-w-xs">{desarrollo.ubicacion}</p>}
           <p className="mt-2">constructoraintegral_acayucan@hotmail.com</p>
-          {whatsapp && <p className="mt-1">Tel. / WhatsApp: {whatsapp}</p>}
+          {desarrollo?.whatsapp && (
+            <p className="mt-1">Tel. / WhatsApp: {desarrollo.whatsapp}</p>
+          )}
         </div>
 
         <div className="text-sm text-sand-300">
           <p className="mb-3 font-semibold text-sand-100">Enlaces</p>
           <ul className="space-y-1.5">
-            <li>
-              <Link href="/lotes" className="hover:text-gold-400">
-                Mapa de lotes
-              </Link>
-            </li>
-            <li>
-              <a href="#financiamiento" className="hover:text-gold-400">
-                Planes de financiamiento
-              </a>
-            </li>
+            {base && (
+              <li>
+                <Link href={`${base}/lotes`} className="hover:text-gold-400">
+                  Mapa de lotes
+                </Link>
+              </li>
+            )}
+            {base && (
+              <li>
+                <a href="#financiamiento" className="hover:text-gold-400">
+                  Planes de financiamiento
+                </a>
+              </li>
+            )}
             <li>
               <Link href="/cliente/login" className="hover:text-gold-400">
                 Mi cuenta (clientes)
@@ -60,16 +72,23 @@ export function SiteFooter({
                 Acceso administrador
               </Link>
             </li>
-            <li>
-              <Link href="/terminos" className="hover:text-gold-400">
-                Términos y Condiciones
-              </Link>
-            </li>
-            <li>
-              <Link href="/privacidad" className="hover:text-gold-400">
-                Aviso de Privacidad
-              </Link>
-            </li>
+            {base && (
+              <li>
+                <Link href={`${base}/terminos`} className="hover:text-gold-400">
+                  Términos y Condiciones
+                </Link>
+              </li>
+            )}
+            {base && (
+              <li>
+                <Link
+                  href={`${base}/privacidad`}
+                  className="hover:text-gold-400"
+                >
+                  Aviso de Privacidad
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
       </div>

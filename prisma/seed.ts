@@ -33,10 +33,12 @@ function mapTipoPago(v: string | null): TipoPago | null {
 }
 
 async function main() {
-  console.log("Seeding proyecto config...");
-  await prisma.proyectoConfig.deleteMany();
-  await prisma.proyectoConfig.create({
-    data: {
+  console.log("Seeding desarrollo Ixmegallo...");
+  const desarrollo = await prisma.desarrollo.upsert({
+    where: { slug: "ixmegallo" },
+    update: {},
+    create: {
+      slug: "ixmegallo",
       nombre: "Fraccionamiento Ixmegallo",
       ubicacion:
         "Calle Ixmegallo, entrando por Ignacio Zaragoza, esquina calle Ixmegallo, rumbo a Cobanal, Acayucan, Veracruz. A 5 minutos de la Unidad Deportiva Vicente Obregón Velard.",
@@ -54,6 +56,8 @@ async function main() {
       disclaimer: DISCLAIMER_DEFAULT,
       terminosCondiciones: TERMINOS_DEFAULT,
       avisoPrivacidad: PRIVACIDAD_DEFAULT,
+      activo: true,
+      orden: 0,
     },
   });
 
@@ -70,10 +74,14 @@ async function main() {
     },
   });
 
-  console.log("Clearing existing lots/manzanas...");
-  await prisma.reserva.deleteMany();
-  await prisma.lote.deleteMany();
-  await prisma.manzana.deleteMany();
+  console.log("Clearing existing lots/manzanas de Ixmegallo...");
+  await prisma.reserva.deleteMany({
+    where: { lote: { desarrolloId: desarrollo.id } },
+  });
+  await prisma.lote.deleteMany({ where: { desarrolloId: desarrollo.id } });
+  await prisma.manzana.deleteMany({
+    where: { desarrolloId: desarrollo.id },
+  });
 
   const data = lotesSeed as SeedLote[];
   const manzanaNumeros = Array.from(new Set(data.map((l) => l.manzana))).sort(
@@ -83,7 +91,9 @@ async function main() {
   console.log(`Seeding ${manzanaNumeros.length} manzanas...`);
   const manzanaIdByNumero = new Map<number, string>();
   for (const numero of manzanaNumeros) {
-    const m = await prisma.manzana.create({ data: { numero } });
+    const m = await prisma.manzana.create({
+      data: { numero, desarrolloId: desarrollo.id },
+    });
     manzanaIdByNumero.set(numero, m.id);
   }
 
@@ -91,6 +101,7 @@ async function main() {
   for (const l of data) {
     await prisma.lote.create({
       data: {
+        desarrolloId: desarrollo.id,
         manzanaId: manzanaIdByNumero.get(l.manzana)!,
         numero: l.lote,
         clave: l.clave,

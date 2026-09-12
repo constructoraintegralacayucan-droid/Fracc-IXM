@@ -30,6 +30,7 @@ export default async function AdminLayout({
           <NavLink href="/admin/reservas">Reservas</NavLink>
           <NavLink href="/admin/testimonios">Testimonios</NavLink>
           <NavLink href="/admin/configuracion">Configuración</NavLink>
+          <NavLink href="/admin/desarrollos">Desarrollos</NavLink>
         </nav>
 
         <div className="mt-auto pt-8 text-xs text-sand-400">
@@ -43,7 +44,7 @@ export default async function AdminLayout({
         </div>
       </aside>
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between border-b border-forest-900/10 bg-sand-50 px-5 py-4 sm:hidden">
           <p className="font-display text-lg font-bold uppercase tracking-[0.06em] text-forest-900">
             Terranova Admin

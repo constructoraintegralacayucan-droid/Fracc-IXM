@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getLotePorId, getProyectoConfig } from "@/lib/data";
+import { getLotePorId } from "@/lib/data";
 import { calcularEstadoCuenta } from "@/lib/pagos";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { AsignarClienteForm } from "@/components/asignar-cliente-form";
@@ -24,12 +24,10 @@ export default async function AdminLoteDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [lote, config] = await Promise.all([
-    getLotePorId(id),
-    getProyectoConfig(),
-  ]);
+  const lote = await getLotePorId(id);
 
   if (!lote) notFound();
+  const config = lote.desarrollo;
 
   const estado = calcularEstadoCuenta(
     {

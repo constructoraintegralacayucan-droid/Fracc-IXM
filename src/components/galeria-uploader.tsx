@@ -12,7 +12,13 @@ const initialState: SubirImagenState = { ok: false, message: "" };
 
 export type ImagenPlano = { id: string; dataUrl: string };
 
-export function GaleriaUploader({ imagenes }: { imagenes: ImagenPlano[] }) {
+export function GaleriaUploader({
+  imagenes,
+  desarrolloId,
+}: {
+  imagenes: ImagenPlano[];
+  desarrolloId: string;
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction] = useActionState(
     async (prev: SubirImagenState, formData: FormData) => {
@@ -36,6 +42,7 @@ export function GaleriaUploader({ imagenes }: { imagenes: ImagenPlano[] }) {
         action={formAction}
         className="mt-4 flex flex-wrap items-center gap-3"
       >
+        <input type="hidden" name="desarrolloId" value={desarrolloId} />
         <input
           type="file"
           name="imagen"

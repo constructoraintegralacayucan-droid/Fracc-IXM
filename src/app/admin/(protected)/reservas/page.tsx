@@ -1,8 +1,11 @@
-import { getReservasTodas } from "@/lib/data";
+import Link from "next/link";
+import { getReservasTodas, resolverDesarrolloAdmin } from "@/lib/data";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { confirmarReserva, cancelarReserva } from "@/app/admin/actions";
+import { AdminDesarrolloSwitcher } from "@/components/admin-desarrollo-switcher";
 
 export const metadata = { title: "Reservas | Terranova Admin" };
+export const dynamic = "force-dynamic";
 
 const ESTATUS_BADGE: Record<string, string> = {
   PENDIENTE: "bg-gold-400/25 text-sand-900",
@@ -11,18 +14,42 @@ const ESTATUS_BADGE: Record<string, string> = {
   EXPIRADA: "bg-stone-ink/10 text-stone-ink/60",
 };
 
-export default async function AdminReservasPage() {
-  const reservas = await getReservasTodas();
+export default async function AdminReservasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ desarrollo?: string }>;
+}) {
+  const { desarrollo: slugParam } = await searchParams;
+  const { desarrollos, actual } = await resolverDesarrolloAdmin(slugParam);
+
+  if (!actual) {
+    return (
+      <p className="text-sm text-forest-700/70">
+        Todavía no hay ningún desarrollo. Crea uno en{" "}
+        <Link href="/admin/desarrollos" className="underline">
+          Desarrollos
+        </Link>
+        .
+      </p>
+    );
+  }
+
+  const reservas = await getReservasTodas(actual.id);
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold text-forest-900">
-        Solicitudes de apartado
-      </h1>
-      <p className="mt-1 text-sm text-forest-700/70">
-        Leads generados desde el sitio público. Confirma o cancela cada
-        solicitud.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-2xl font-semibold text-forest-900">
+            Solicitudes de apartado
+          </h1>
+          <p className="mt-1 text-sm text-forest-700/70">
+            {actual.nombre} — Leads generados desde el sitio público. Confirma
+            o cancela cada solicitud.
+          </p>
+        </div>
+        <AdminDesarrolloSwitcher desarrollos={desarrollos} actualSlug={actual.slug} />
+      </div>
 
       <div className="mt-8 space-y-3">
         {reservas.length === 0 && (

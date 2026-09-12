@@ -1,8 +1,11 @@
-import { getTestimoniosTodos } from "@/lib/data";
+import Link from "next/link";
+import { getTestimoniosTodos, resolverDesarrolloAdmin } from "@/lib/data";
 import { formatoFecha } from "@/lib/financiamiento";
 import { aprobarTestimonio, rechazarTestimonio } from "@/app/admin/actions";
+import { AdminDesarrolloSwitcher } from "@/components/admin-desarrollo-switcher";
 
 export const metadata = { title: "Testimonios | Terranova Admin" };
+export const dynamic = "force-dynamic";
 
 const ESTATUS_BADGE: Record<string, string> = {
   PENDIENTE: "bg-gold-400/25 text-sand-900",
@@ -10,17 +13,42 @@ const ESTATUS_BADGE: Record<string, string> = {
   RECHAZADO: "bg-stone-ink/10 text-stone-ink/60",
 };
 
-export default async function AdminTestimoniosPage() {
-  const testimonios = await getTestimoniosTodos();
+export default async function AdminTestimoniosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ desarrollo?: string }>;
+}) {
+  const { desarrollo: slugParam } = await searchParams;
+  const { desarrollos, actual } = await resolverDesarrolloAdmin(slugParam);
+
+  if (!actual) {
+    return (
+      <p className="text-sm text-forest-700/70">
+        Todavía no hay ningún desarrollo. Crea uno en{" "}
+        <Link href="/admin/desarrollos" className="underline">
+          Desarrollos
+        </Link>
+        .
+      </p>
+    );
+  }
+
+  const testimonios = await getTestimoniosTodos(actual.id);
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold text-forest-900">
-        Testimonios
-      </h1>
-      <p className="mt-1 text-sm text-forest-700/70">
-        Apruébalos para que aparezcan en la página principal.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-2xl font-semibold text-forest-900">
+            Testimonios
+          </h1>
+          <p className="mt-1 text-sm text-forest-700/70">
+            {actual.nombre} — Apruébalos para que aparezcan en la página
+            principal.
+          </p>
+        </div>
+        <AdminDesarrolloSwitcher desarrollos={desarrollos} actualSlug={actual.slug} />
+      </div>
 
       <div className="mt-8 space-y-3">
         {testimonios.length === 0 && (

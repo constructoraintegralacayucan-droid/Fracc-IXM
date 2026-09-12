@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const existing = await prisma.proyectoConfig.count();
+  const existing = await prisma.desarrollo.count();
   if (existing > 0) {
     return NextResponse.json({
       ok: true,
@@ -50,8 +50,9 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  await prisma.proyectoConfig.create({
+  const desarrollo = await prisma.desarrollo.create({
     data: {
+      slug: "ixmegallo",
       nombre: "Fraccionamiento Ixmegallo",
       ubicacion:
         "Calle Ixmegallo, entrando por Ignacio Zaragoza, esquina calle Ixmegallo, rumbo a Cobanal, Acayucan, Veracruz. A 5 minutos de la Unidad Deportiva Vicente Obregón Velard.",
@@ -69,6 +70,8 @@ export async function GET(request: NextRequest) {
       disclaimer: DISCLAIMER_DEFAULT,
       terminosCondiciones: TERMINOS_DEFAULT,
       avisoPrivacidad: PRIVACIDAD_DEFAULT,
+      activo: true,
+      orden: 0,
     },
   });
 
@@ -91,13 +94,16 @@ export async function GET(request: NextRequest) {
 
   const manzanaIdByNumero = new Map<number, string>();
   for (const numero of manzanaNumeros) {
-    const m = await prisma.manzana.create({ data: { numero } });
+    const m = await prisma.manzana.create({
+      data: { numero, desarrolloId: desarrollo.id },
+    });
     manzanaIdByNumero.set(numero, m.id);
   }
 
   for (const l of data) {
     await prisma.lote.create({
       data: {
+        desarrolloId: desarrollo.id,
         manzanaId: manzanaIdByNumero.get(l.manzana)!,
         numero: l.lote,
         clave: l.clave,

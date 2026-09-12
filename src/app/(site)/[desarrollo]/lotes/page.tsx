@@ -1,17 +1,31 @@
-import { getManzanasConLotes, getProyectoConfig } from "@/lib/data";
+import { notFound } from "next/navigation";
+import { getManzanasConLotes, getDesarrolloBySlug } from "@/lib/data";
 import { LoteMap } from "@/components/lote-map";
-
-export const metadata = {
-  title: "Mapa de lotes | Terranova - Fraccionamiento Ixmegallo",
-};
 
 export const dynamic = "force-dynamic";
 
-export default async function LotesPage() {
-  const [manzanas, config] = await Promise.all([
-    getManzanasConLotes(),
-    getProyectoConfig(),
-  ]);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ desarrollo: string }>;
+}) {
+  const { desarrollo: slug } = await params;
+  const config = await getDesarrolloBySlug(slug);
+  return {
+    title: `Mapa de lotes | ${config?.nombre ?? "Terranova"}`,
+  };
+}
+
+export default async function LotesPage({
+  params,
+}: {
+  params: Promise<{ desarrollo: string }>;
+}) {
+  const { desarrollo: slug } = await params;
+  const config = await getDesarrolloBySlug(slug);
+  if (!config) notFound();
+
+  const manzanas = await getManzanasConLotes(config.id);
 
   const manzanasPlano = manzanas.map((m) => {
     const disponiblesEnManzana = m.lotes.filter(
@@ -44,7 +58,7 @@ export default async function LotesPage() {
         Mapa interactivo
       </p>
       <h1 className="mt-3 font-display text-4xl font-semibold text-forest-900">
-        Lotes en Ixmegallo
+        Lotes en {config.nombre}
       </h1>
       <p className="mt-3 max-w-2xl text-forest-700">
         Selecciona un lote disponible para ver su precio, simular tu
@@ -54,6 +68,7 @@ export default async function LotesPage() {
       <div className="mt-10">
         <LoteMap
           manzanas={manzanasPlano}
+          desarrolloSlug={slug}
           config={{
             moneda: config.moneda,
             inicialMinimoPct: config.inicialMinimoPct,

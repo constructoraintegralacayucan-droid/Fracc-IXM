@@ -1,16 +1,51 @@
 import "server-only";
 import { prisma } from "./prisma";
 
-export async function getProyectoConfig() {
-  const config = await prisma.proyectoConfig.findFirst();
-  if (!config) {
-    throw new Error("No hay configuración de proyecto. Corre el seed.");
-  }
-  return config;
+/** Desarrollos activos, para la pantalla de selección "Terranova". */
+export async function getDesarrollos() {
+  return prisma.desarrollo.findMany({
+    where: { activo: true },
+    orderBy: { orden: "asc" },
+  });
 }
 
-export async function getManzanasConLotes() {
+/** Todos los desarrollos (activos e inactivos), para administración. */
+export async function getDesarrollosTodos() {
+  return prisma.desarrollo.findMany({
+    orderBy: { orden: "asc" },
+  });
+}
+
+export async function getDesarrolloBySlug(slug: string) {
+  return prisma.desarrollo.findUnique({ where: { slug } });
+}
+
+export async function getDesarrolloPorId(id: string) {
+  return prisma.desarrollo.findUnique({ where: { id } });
+}
+
+/**
+ * Para las páginas de administración: resuelve qué desarrollo se está
+ * viendo/editando a partir del ?desarrollo=slug de la URL, cayendo al
+ * primero por orden si no se especifica o no existe.
+ */
+export async function resolverDesarrolloAdmin(slugParam?: string) {
+  const desarrollos = await getDesarrollosTodos();
+  const actual =
+    desarrollos.find((d) => d.slug === slugParam) ?? desarrollos[0] ?? null;
+  // Solo los campos planos que necesita el <select> de cambio de
+  // desarrollo (un Client Component no puede recibir los Decimal de Prisma).
+  const desarrollosPlano = desarrollos.map((d) => ({
+    slug: d.slug,
+    nombre: d.nombre,
+    activo: d.activo,
+  }));
+  return { desarrollos: desarrollosPlano, actual };
+}
+
+export async function getManzanasConLotes(desarrolloId: string) {
   return prisma.manzana.findMany({
+    where: { desarrolloId },
     orderBy: { numero: "asc" },
     include: {
       lotes: {
@@ -20,18 +55,15 @@ export async function getManzanasConLotes() {
   });
 }
 
-export async function getLotePorClave(clave: string) {
-  return prisma.lote.findUnique({ where: { clave } });
-}
-
-export async function getStats() {
+export async function getStats(desarrolloId: string) {
   const [total, disponibles, apartados, vendidos, montos] =
     await Promise.all([
-      prisma.lote.count(),
-      prisma.lote.count({ where: { estatus: "DISPONIBLE" } }),
-      prisma.lote.count({ where: { estatus: "APARTADO" } }),
-      prisma.lote.count({ where: { estatus: "VENDIDO" } }),
+      prisma.lote.count({ where: { desarrolloId } }),
+      prisma.lote.count({ where: { desarrolloId, estatus: "DISPONIBLE" } }),
+      prisma.lote.count({ where: { desarrolloId, estatus: "APARTADO" } }),
+      prisma.lote.count({ where: { desarrolloId, estatus: "VENDIDO" } }),
       prisma.lote.aggregate({
+        where: { desarrolloId },
         _sum: { precio: true, anticipo: true, saldo: true },
       }),
     ]);
@@ -47,13 +79,16 @@ export async function getStats() {
   };
 }
 
-export async function getGaleriaImagenes() {
-  return prisma.imagenGaleria.findMany({ orderBy: { orden: "asc" } });
+export async function getGaleriaImagenes(desarrolloId: string) {
+  return prisma.imagenGaleria.findMany({
+    where: { desarrolloId },
+    orderBy: { orden: "asc" },
+  });
 }
 
-export async function getTestimoniosAprobados() {
+export async function getTestimoniosAprobados(desarrolloId: string) {
   return prisma.testimonio.findMany({
-    where: { estatus: "APROBADO" },
+    where: { desarrolloId, estatus: "APROBADO" },
     orderBy: { createdAt: "desc" },
     take: 9,
   });
@@ -66,23 +101,25 @@ export async function getTestimonioDeCliente(clienteId: string) {
   });
 }
 
-export async function getTestimoniosTodos() {
+export async function getTestimoniosTodos(desarrolloId: string) {
   return prisma.testimonio.findMany({
+    where: { desarrolloId },
     orderBy: { createdAt: "desc" },
     include: { cliente: true },
   });
 }
 
-export async function getPrecioDesde() {
+export async function getPrecioDesde(desarrolloId: string) {
   const min = await prisma.lote.aggregate({
-    where: { estatus: "DISPONIBLE" },
+    where: { desarrolloId, estatus: "DISPONIBLE" },
     _min: { precio: true },
   });
   return Number(min._min.precio ?? 0);
 }
 
-export async function getResumenPorManzana() {
+export async function getResumenPorManzana(desarrolloId: string) {
   const manzanas = await prisma.manzana.findMany({
+    where: { desarrolloId },
     orderBy: { numero: "asc" },
     include: { lotes: true },
   });
@@ -106,23 +143,25 @@ export async function getResumenPorManzana() {
   });
 }
 
-export async function getReservasPendientes() {
+export async function getReservasPendientes(desarrolloId: string) {
   return prisma.reserva.findMany({
-    where: { estatus: "PENDIENTE" },
+    where: { estatus: "PENDIENTE", lote: { desarrolloId } },
     orderBy: { createdAt: "desc" },
     include: { lote: { include: { manzana: true } } },
   });
 }
 
-export async function getReservasTodas() {
+export async function getReservasTodas(desarrolloId: string) {
   return prisma.reserva.findMany({
+    where: { lote: { desarrolloId } },
     orderBy: { createdAt: "desc" },
     include: { lote: { include: { manzana: true } } },
   });
 }
 
-export async function getLotesConManzana() {
+export async function getLotesConManzana(desarrolloId: string) {
   return prisma.lote.findMany({
+    where: { desarrolloId },
     orderBy: [{ manzana: { numero: "asc" } }, { numero: "asc" }],
     include: { manzana: true },
   });
@@ -133,6 +172,7 @@ export async function getLotePorId(id: string) {
     where: { id },
     include: {
       manzana: true,
+      desarrollo: true,
       cliente: true,
       pagos: { orderBy: { fecha: "asc" } },
     },
@@ -145,6 +185,7 @@ export async function getLotesDeCliente(clienteId: string) {
     orderBy: [{ manzana: { numero: "asc" } }, { numero: "asc" }],
     include: {
       manzana: true,
+      desarrollo: true,
       pagos: { orderBy: { fecha: "asc" } },
     },
   });

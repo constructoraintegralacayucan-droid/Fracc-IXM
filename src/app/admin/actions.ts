@@ -71,7 +71,10 @@ export async function actualizarLote(formData: FormData) {
 
   if (!loteId) return;
 
-  const lote = await prisma.lote.findUnique({ where: { id: loteId } });
+  const lote = await prisma.lote.findUnique({
+    where: { id: loteId },
+    include: { desarrollo: true },
+  });
   if (!lote) return;
 
   // "Contado" es la vía rápida para lotes pagados de una sola vez: no
@@ -101,7 +104,7 @@ export async function actualizarLote(formData: FormData) {
 
   revalidatePath("/admin/lotes");
   revalidatePath("/admin/dashboard");
-  revalidatePath("/lotes");
+  revalidatePath(`/${lote.desarrollo.slug}/lotes`);
 }
 
 export async function confirmarReserva(formData: FormData) {
@@ -111,7 +114,7 @@ export async function confirmarReserva(formData: FormData) {
 
   const reserva = await prisma.reserva.findUnique({
     where: { id: reservaId },
-    include: { lote: true },
+    include: { lote: { include: { desarrollo: true } } },
   });
   if (!reserva) return;
 
@@ -135,7 +138,7 @@ export async function confirmarReserva(formData: FormData) {
   revalidatePath("/admin/reservas");
   revalidatePath("/admin/lotes");
   revalidatePath("/admin/dashboard");
-  revalidatePath("/lotes");
+  revalidatePath(`/${reserva.lote.desarrollo.slug}/lotes`);
 }
 
 export type AsignarClienteState = { ok: boolean; message: string };
@@ -277,7 +280,10 @@ export async function actualizarConfig(
 ): Promise<ActualizarConfigState> {
   await requireAdmin();
 
-  const config = await prisma.proyectoConfig.findFirst();
+  const desarrolloId = String(formData.get("desarrolloId") ?? "");
+  const config = desarrolloId
+    ? await prisma.desarrollo.findUnique({ where: { id: desarrolloId } })
+    : null;
   if (!config) {
     return { ok: false, message: "No hay configuración para actualizar." };
   }
@@ -306,7 +312,7 @@ export async function actualizarConfig(
     return { ok: false, message: "Nombre y ubicación son obligatorios." };
   }
 
-  await prisma.proyectoConfig.update({
+  await prisma.desarrollo.update({
     where: { id: config.id },
     data: {
       nombre,
@@ -328,13 +334,85 @@ export async function actualizarConfig(
     },
   });
 
-  revalidatePath("/");
-  revalidatePath("/lotes");
-  revalidatePath("/terminos");
-  revalidatePath("/privacidad");
+  revalidatePath(`/${config.slug}`);
+  revalidatePath(`/${config.slug}/lotes`);
+  revalidatePath(`/${config.slug}/terminos`);
+  revalidatePath(`/${config.slug}/privacidad`);
   revalidatePath("/admin/configuracion");
 
   return { ok: true, message: "Configuración actualizada." };
+}
+
+export type CrearDesarrolloState = { ok: boolean; message: string };
+
+export async function crearDesarrollo(
+  _prevState: CrearDesarrolloState,
+  formData: FormData
+): Promise<CrearDesarrolloState> {
+  await requireAdmin();
+
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const ubicacion = String(formData.get("ubicacion") ?? "").trim();
+  const slugRaw = String(formData.get("slug") ?? "").trim();
+  const slug = slugRaw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  if (!nombre || !ubicacion || !slug) {
+    return {
+      ok: false,
+      message: "Nombre, ubicación y slug son obligatorios.",
+    };
+  }
+
+  const existente = await prisma.desarrollo.findUnique({ where: { slug } });
+  if (existente) {
+    return {
+      ok: false,
+      message: `Ya existe un desarrollo con la dirección "${slug}". Usa otro nombre.`,
+    };
+  }
+
+  const ultimo = await prisma.desarrollo.findFirst({
+    orderBy: { orden: "desc" },
+  });
+
+  await prisma.desarrollo.create({
+    data: {
+      slug,
+      nombre,
+      ubicacion,
+      activo: false,
+      orden: (ultimo?.orden ?? -1) + 1,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/desarrollos");
+
+  return {
+    ok: true,
+    message: `Desarrollo "${nombre}" creado. Complétalo y actívalo cuando esté listo para publicarse.`,
+  };
+}
+
+export async function actualizarEstadoDesarrollo(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const activo = formData.get("activo") === "on";
+  if (!id) return;
+
+  const desarrollo = await prisma.desarrollo.update({
+    where: { id },
+    data: { activo },
+  });
+
+  revalidatePath("/");
+  revalidatePath(`/${desarrollo.slug}`);
+  revalidatePath("/admin/desarrollos");
 }
 
 const TIPOS_IMAGEN_PERMITIDOS = ["image/jpeg", "image/png", "image/webp"];
@@ -348,7 +426,11 @@ export async function subirImagenGaleria(
 ): Promise<SubirImagenState> {
   await requireAdmin();
 
+  const desarrolloId = String(formData.get("desarrolloId") ?? "");
   const file = formData.get("imagen");
+  if (!desarrolloId) {
+    return { ok: false, message: "Falta el desarrollo." };
+  }
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, message: "Selecciona una imagen." };
   }
@@ -368,12 +450,15 @@ export async function subirImagenGaleria(
   const buffer = Buffer.from(await file.arrayBuffer());
   const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-  const count = await prisma.imagenGaleria.count();
+  const [count, desarrollo] = await Promise.all([
+    prisma.imagenGaleria.count({ where: { desarrolloId } }),
+    prisma.desarrollo.findUnique({ where: { id: desarrolloId } }),
+  ]);
   await prisma.imagenGaleria.create({
-    data: { dataUrl, orden: count },
+    data: { dataUrl, orden: count, desarrolloId },
   });
 
-  revalidatePath("/");
+  if (desarrollo) revalidatePath(`/${desarrollo.slug}`);
   revalidatePath("/admin/configuracion");
 
   return { ok: true, message: "Imagen agregada." };
@@ -384,9 +469,12 @@ export async function eliminarImagenGaleria(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  await prisma.imagenGaleria.delete({ where: { id } });
+  const imagen = await prisma.imagenGaleria.delete({
+    where: { id },
+    include: { desarrollo: true },
+  });
 
-  revalidatePath("/");
+  revalidatePath(`/${imagen.desarrollo.slug}`);
   revalidatePath("/admin/configuracion");
 }
 
@@ -395,12 +483,13 @@ export async function aprobarTestimonio(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  await prisma.testimonio.update({
+  const testimonio = await prisma.testimonio.update({
     where: { id },
     data: { estatus: "APROBADO" },
+    include: { desarrollo: true },
   });
 
-  revalidatePath("/");
+  revalidatePath(`/${testimonio.desarrollo.slug}`);
   revalidatePath("/admin/testimonios");
 }
 
@@ -409,12 +498,13 @@ export async function rechazarTestimonio(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  await prisma.testimonio.update({
+  const testimonio = await prisma.testimonio.update({
     where: { id },
     data: { estatus: "RECHAZADO" },
+    include: { desarrollo: true },
   });
 
-  revalidatePath("/");
+  revalidatePath(`/${testimonio.desarrollo.slug}`);
   revalidatePath("/admin/testimonios");
 }
 
@@ -425,6 +515,7 @@ export async function cancelarReserva(formData: FormData) {
 
   const reserva = await prisma.reserva.findUnique({
     where: { id: reservaId },
+    include: { lote: { include: { desarrollo: true } } },
   });
   if (!reserva) return;
 
@@ -442,5 +533,5 @@ export async function cancelarReserva(formData: FormData) {
   revalidatePath("/admin/reservas");
   revalidatePath("/admin/lotes");
   revalidatePath("/admin/dashboard");
-  revalidatePath("/lotes");
+  revalidatePath(`/${reserva.lote.desarrollo.slug}/lotes`);
 }
