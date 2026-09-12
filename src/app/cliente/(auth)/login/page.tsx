@@ -1,7 +1,7 @@
 import { ClienteLoginForm } from "@/components/cliente-login-form";
 import { LogoMark } from "@/components/logo";
 
-export const metadata = { title: "Mi cuenta | Terranova App" };
+export const metadata = { title: "Mi cuenta | Terranova" };
 
 export default function ClienteLoginPage() {
   return (
@@ -9,7 +9,7 @@ export default function ClienteLoginPage() {
       <div className="w-full max-w-sm rounded-3xl bg-sand-50 p-8 shadow-2xl">
         <LogoMark className="h-10 w-10 text-forest-900" />
         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.25em] text-gold-600">
-          Terranova App
+          Terranova
         </p>
         <h1 className="mt-2 font-display text-2xl font-semibold text-forest-900">
           Mi cuenta

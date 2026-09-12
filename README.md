@@ -1,9 +1,9 @@
-# Terranova App — Fraccionamiento Ixmegallo
+# Terranova — Fraccionamiento Ixmegallo
 
 Plataforma de venta de lotes (mapa interactivo, financiamiento, apartados y
 panel de administración) para el Fraccionamiento Ixmegallo en Acayucan,
 Veracruz. Inspirada en la funcionalidad de plataformas tipo lotización, con
-identidad propia Terranova App (verde bosque, sage, dorado y crema; tipografía
+identidad propia Terranova (verde bosque, sage, dorado y crema; tipografía
 Montserrat/Lato).
 
 ## Stack

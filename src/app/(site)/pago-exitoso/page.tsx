@@ -1,4 +1,4 @@
-export const metadata = { title: "Pago recibido | Terranova App" };
+export const metadata = { title: "Pago recibido | Terranova" };
 
 export default async function PagoExitosoPage({
   searchParams,

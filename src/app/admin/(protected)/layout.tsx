@@ -16,7 +16,7 @@ export default async function AdminLayout({
         <div className="flex items-center gap-2.5">
           <LogoMark className="h-8 w-8 text-sand-50" />
           <p className="font-display text-xl font-bold uppercase tracking-[0.08em] text-sand-50">
-            Terranova App
+            Terranova
           </p>
         </div>
         <p className="mt-1.5 text-xs text-sand-400">
@@ -45,7 +45,7 @@ export default async function AdminLayout({
       <div className="flex-1">
         <header className="flex items-center justify-between border-b border-forest-900/10 bg-sand-50 px-5 py-4 sm:hidden">
           <p className="font-display text-lg font-bold uppercase tracking-[0.06em] text-forest-900">
-            Terranova App Admin
+            Terranova Admin
           </p>
           <form action={logoutAdmin}>
             <button className="text-xs font-medium text-forest-700 underline">

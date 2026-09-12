@@ -18,7 +18,7 @@ export function SiteFooter({
           <div className="flex items-center gap-2.5">
             <LogoMark className="h-9 w-9 text-sand-50" />
             <p className="font-display text-2xl font-bold uppercase tracking-[0.08em] text-sand-50">
-              Terranova App
+              Terranova
             </p>
           </div>
           <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.15em] text-sand-400">
@@ -74,7 +74,7 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t border-sand-100/10 py-5 text-center text-xs text-sand-400">
-        © {new Date().getFullYear()} Terranova App. Todos los derechos
+        © {new Date().getFullYear()} Terranova. Todos los derechos
         reservados.
       </div>
     </footer>
