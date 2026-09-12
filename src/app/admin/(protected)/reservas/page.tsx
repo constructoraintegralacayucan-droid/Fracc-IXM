@@ -66,7 +66,7 @@ export default async function AdminReservasPage({
             className="flex flex-col gap-3 rounded-2xl border border-forest-900/10 bg-sand-50 p-5 sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <p className="font-semibold text-forest-900">
                   Lote {r.lote.clave}
                 </p>
@@ -75,6 +75,11 @@ export default async function AdminReservasPage({
                 >
                   {r.estatus}
                 </span>
+                {r.colaborador && (
+                  <span className="rounded-full bg-gold-400/25 px-2.5 py-0.5 text-xs font-semibold text-sand-900">
+                    Colaborador: {r.colaborador.nombre}
+                  </span>
+                )}
               </div>
               <p className="mt-1 text-sm text-forest-800">
                 {r.nombre} · {r.telefono}
@@ -86,6 +91,16 @@ export default async function AdminReservasPage({
                 apartado: {formatoMoneda(Number(r.montoReserva))} · Recibida
                 el {formatoFecha(r.createdAt)}
               </p>
+              {r.comprobantePago && (
+                <a
+                  href={r.comprobantePago}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-block text-xs font-semibold text-gold-600 hover:underline"
+                >
+                  Ver comprobante subido →
+                </a>
+              )}
             </div>
 
             {r.estatus === "PENDIENTE" && (

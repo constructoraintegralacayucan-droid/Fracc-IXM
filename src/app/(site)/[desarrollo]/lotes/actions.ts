@@ -10,6 +10,7 @@ export type CrearReservaState = {
   ok: boolean;
   message: string;
   checkoutUrl?: string;
+  reservaId?: string;
 };
 
 export async function crearReserva(
@@ -118,5 +119,65 @@ export async function crearReserva(
       ? "¡Solicitud registrada! Puedes pagar tu apartado en línea con tarjeta ahora, o esperar a que nuestro equipo te contacte."
       : "¡Solicitud enviada! Nuestro equipo se pondrá en contacto contigo para confirmar tu apartado.",
     checkoutUrl,
+    reservaId: reserva.id,
   };
+}
+
+const TIPOS_COMPROBANTE_PERMITIDOS = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
+const MAX_BYTES_COMPROBANTE = 4 * 1024 * 1024;
+
+export type SubirComprobanteState = { ok: boolean; message: string };
+
+export async function subirComprobanteReserva(
+  _prevState: SubirComprobanteState,
+  formData: FormData
+): Promise<SubirComprobanteState> {
+  const reservaId = String(formData.get("reservaId") ?? "");
+  const file = formData.get("comprobante");
+
+  if (!reservaId) {
+    return { ok: false, message: "Falta la solicitud de apartado." };
+  }
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Selecciona un archivo." };
+  }
+  if (!TIPOS_COMPROBANTE_PERMITIDOS.includes(file.type)) {
+    return {
+      ok: false,
+      message: "Formato no permitido. Usa JPG, PNG, WEBP o PDF.",
+    };
+  }
+  if (file.size > MAX_BYTES_COMPROBANTE) {
+    return {
+      ok: false,
+      message: "El archivo pesa más de 4MB. Comprímelo e intenta de nuevo.",
+    };
+  }
+
+  const reserva = await prisma.reserva.findUnique({
+    where: { id: reservaId },
+  });
+  if (!reserva || reserva.estatus !== "PENDIENTE") {
+    return {
+      ok: false,
+      message: "Esta solicitud ya no acepta comprobantes.",
+    };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
+
+  await prisma.reserva.update({
+    where: { id: reservaId },
+    data: { comprobantePago: dataUrl },
+  });
+
+  revalidatePath("/admin/reservas");
+
+  return { ok: true, message: "¡Comprobante recibido! Gracias." };
 }

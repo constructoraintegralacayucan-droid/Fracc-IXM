@@ -82,6 +82,7 @@ export default async function LotesPage({
             tasaInteres: config.tasaInteres,
             reservaMinima: Number(config.reservaMinima),
             datosBancarios: config.datosBancarios,
+            whatsapp: config.whatsapp ?? "",
           }}
         />
       </div>

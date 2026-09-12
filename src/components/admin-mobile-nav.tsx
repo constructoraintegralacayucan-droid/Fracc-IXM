@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/admin/testimonios", label: "Testim." },
   { href: "/admin/configuracion", label: "Ajustes" },
   { href: "/admin/desarrollos", label: "Desarr." },
+  { href: "/admin/colaboradores", label: "Colab." },
 ];
 
 export function AdminMobileNav() {

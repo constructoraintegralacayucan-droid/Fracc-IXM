@@ -8,6 +8,7 @@ import {
   type CrearReservaState,
 } from "@/app/(site)/[desarrollo]/lotes/actions";
 import type { ProyectoConfigPlano } from "./lote-map";
+import { ComprobanteUploadForm } from "./comprobante-upload-form";
 
 export type LotePlano = {
   clave: string;
@@ -66,6 +67,15 @@ export function LoteDetailPanel({
   );
 
   const [state, formAction] = useActionState(crearReserva, initialState);
+
+  const whatsappDigitos = config.whatsapp.replace(/\D/g, "");
+  const whatsappLink = whatsappDigitos
+    ? `https://wa.me/${
+        whatsappDigitos.startsWith("52") ? whatsappDigitos : `52${whatsappDigitos}`
+      }?text=${encodeURIComponent(
+        `Hola, ya envié mi apartado del lote ${lote.clave} (Manzana ${lote.manzanaNumero}). Adjunto mi comprobante de pago.`
+      )}`
+    : null;
 
   const avisoDisponibilidad =
     disponiblesEnManzana === 1
@@ -243,31 +253,57 @@ export function LoteDetailPanel({
               {state.message}
             </p>
           )}
-
-          {state.ok && state.checkoutUrl && (
-            <a
-              href={state.checkoutUrl}
-              className="block w-full rounded-full bg-forest-800 py-3 text-center text-sm font-semibold text-sand-50 transition hover:bg-forest-700"
-            >
-              Pagar apartado ahora con tarjeta
-            </a>
-          )}
-
-          {state.ok && config.datosBancarios && (
-            <div className="rounded-2xl border border-forest-900/10 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-forest-700/60">
-                O transfiere tu apartado a
-              </p>
-              <p className="mt-2 whitespace-pre-line text-sm text-forest-800">
-                {config.datosBancarios}
-              </p>
-              <p className="mt-2 text-xs text-forest-700/60">
-                Envíanos tu comprobante por WhatsApp para confirmar tu
-                apartado más rápido.
-              </p>
-            </div>
-          )}
         </form>
+
+        {state.ok && (
+          <div className="mt-4 space-y-4">
+            {state.checkoutUrl && (
+              <a
+                href={state.checkoutUrl}
+                className="block w-full rounded-full bg-forest-800 py-3 text-center text-sm font-semibold text-sand-50 transition hover:bg-forest-700"
+              >
+                Pagar apartado ahora con tarjeta
+              </a>
+            )}
+
+            {config.datosBancarios && (
+              <div className="rounded-2xl border border-forest-900/10 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-forest-700/60">
+                  O transfiere tu apartado a
+                </p>
+                <p className="mt-2 whitespace-pre-line text-sm text-forest-800">
+                  {config.datosBancarios}
+                </p>
+              </div>
+            )}
+
+            {state.reservaId && (
+              <div className="rounded-2xl border border-forest-900/10 bg-white p-4">
+                <ComprobanteUploadForm reservaId={state.reservaId} />
+              </div>
+            )}
+
+            {whatsappLink && (
+              <div className="rounded-2xl border border-gold-500/30 bg-gold-400/10 p-4">
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full rounded-full bg-[#25D366] py-2.5 text-center text-sm font-semibold text-white transition hover:brightness-95"
+                >
+                  Enviar comprobante por WhatsApp
+                </a>
+                <p className="mt-2 text-xs text-forest-700/70">
+                  <strong>Importante:</strong> en el chat de WhatsApp con
+                  nosotros, desactiva los &ldquo;mensajes temporales&rdquo;
+                  (que desaparecen). Necesitamos conservar el historial
+                  completo de la conversación por logística y seguimiento de
+                  tu apartado.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

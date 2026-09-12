@@ -55,10 +55,19 @@ export async function generarReciboPago(
     height: 110,
     color: forestDark,
   });
-  page.drawText("TERRANOVA", {
+  const maxHeaderWidth = width - 250;
+  let headerSize = 24;
+  while (
+    headerSize > 14 &&
+    fontBold.widthOfTextAtSize(datos.desarrolloNombre, headerSize) >
+      maxHeaderWidth
+  ) {
+    headerSize -= 1;
+  }
+  page.drawText(datos.desarrolloNombre, {
     x: 50,
     y: height - 55,
-    size: 24,
+    size: headerSize,
     font: fontBold,
     color: rgb(1, 1, 1),
   });

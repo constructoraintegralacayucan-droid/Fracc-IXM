@@ -153,6 +153,13 @@ model Reserva {
   plazoMeses    Int?
   inicialMonto  Decimal?       @db.Decimal(12, 2)
   mensajeCliente String?
+  // Comprobante de pago (transferencia/depósito) que el propio cliente
+  // sube desde el sitio, para que el admin lo revise antes de confirmar.
+  comprobantePago String?
+  // Presente cuando la solicitud la levantó un colaborador desde su
+  // propio panel (en vez de venir del sitio público).
+  colaborador   Colaborador?   @relation(fields: [colaboradorId], references: [id])
+  colaboradorId String?
   estatus       EstatusReserva @default(PENDIENTE)
   expiraEn      DateTime?
   ordenesPago   OrdenPago[]
@@ -162,6 +169,19 @@ model Reserva {
 
   @@index([loteId])
   @@index([estatus])
+  @@index([colaboradorId])
+}
+
+model Colaborador {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  nombre       String
+  telefono     String?
+  activo       Boolean   @default(true)
+  reservas     Reserva[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model OrdenPago {

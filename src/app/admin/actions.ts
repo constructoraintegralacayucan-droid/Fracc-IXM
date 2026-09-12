@@ -555,6 +555,64 @@ export async function actualizarEstadoDesarrollo(formData: FormData) {
   revalidatePath("/admin/desarrollos");
 }
 
+export type CrearColaboradorState = { ok: boolean; message: string };
+
+export async function crearColaborador(
+  _prevState: CrearColaboradorState,
+  formData: FormData
+): Promise<CrearColaboradorState> {
+  await requireAdmin();
+
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const telefono = String(formData.get("telefono") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!nombre || !email || !password) {
+    return { ok: false, message: "Completa nombre, correo y contraseña." };
+  }
+  if (password.length < 6) {
+    return {
+      ok: false,
+      message: "La contraseña debe tener al menos 6 caracteres.",
+    };
+  }
+
+  const existente = await prisma.colaborador.findUnique({ where: { email } });
+  if (existente) {
+    return {
+      ok: false,
+      message: "Ya existe un colaborador con ese correo.",
+    };
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await prisma.colaborador.create({
+    data: { nombre, email, telefono: telefono || null, passwordHash },
+  });
+
+  revalidatePath("/admin/colaboradores");
+
+  return {
+    ok: true,
+    message: `Colaborador "${nombre}" creado. Ya puede iniciar sesión en /colaborador/login.`,
+  };
+}
+
+export async function actualizarEstadoColaborador(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const activo = formData.get("activo") === "on";
+  if (!id) return;
+
+  await prisma.colaborador.update({
+    where: { id },
+    data: { activo },
+  });
+
+  revalidatePath("/admin/colaboradores");
+}
+
 const TIPOS_IMAGEN_PERMITIDOS = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BYTES_IMAGEN_PORTADA = 4 * 1024 * 1024;
 

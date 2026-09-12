@@ -17,6 +17,7 @@ export type ProyectoConfigPlano = {
   tasaInteres: number;
   reservaMinima: number;
   datosBancarios: string;
+  whatsapp: string;
 };
 
 export function LoteMap({

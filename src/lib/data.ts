@@ -210,7 +210,11 @@ export async function getReservasTodas(desarrolloId: string) {
   return prisma.reserva.findMany({
     where: { lote: { desarrolloId } },
     orderBy: { createdAt: "desc" },
-    include: { lote: { include: { manzana: true } }, pagos: true },
+    include: {
+      lote: { include: { manzana: true } },
+      pagos: true,
+      colaborador: true,
+    },
   });
 }
 
