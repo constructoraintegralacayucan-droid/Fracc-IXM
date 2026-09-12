@@ -95,33 +95,41 @@ export function AdminLotesTable({ lotes }: { lotes: LoteAdminPlano[] }) {
         {filtrados.length} lote(s)
       </p>
 
-      <div className="overflow-x-auto rounded-2xl border border-forest-900/10 bg-sand-50">
-        <table className="w-full min-w-[980px] text-left text-sm">
-          <thead>
-            <tr className="border-b border-forest-900/10 text-xs uppercase tracking-wide text-forest-700/70">
-              <th className="px-4 py-3 font-semibold">Clave</th>
-              <th className="px-4 py-3 font-semibold">Estatus</th>
-              <th className="px-4 py-3 font-semibold">Tipo</th>
-              <th className="px-4 py-3 font-semibold">Precio</th>
-              <th className="px-4 py-3 font-semibold">Comprador</th>
-              <th className="px-4 py-3 font-semibold">Teléfono</th>
-              <th className="px-4 py-3 font-semibold">Correo</th>
-              <th className="px-4 py-3 font-semibold">Saldo</th>
-              <th className="px-4 py-3 font-semibold"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtrados.map((lote) => (
-              <tr
-                key={lote.id}
-                className="border-b border-forest-900/5 align-top last:border-0"
-              >
-                <FilaLote lote={lote} />
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="space-y-3 sm:space-y-0 sm:overflow-x-auto sm:rounded-2xl sm:border sm:border-forest-900/10 sm:bg-sand-50">
+        <div className="hidden text-xs uppercase tracking-wide text-forest-700/70 sm:grid sm:grid-cols-9 sm:gap-2 sm:border-b sm:border-forest-900/10 sm:px-4 sm:py-3">
+          <div className="font-semibold">Clave</div>
+          <div className="font-semibold">Estatus</div>
+          <div className="font-semibold">Tipo</div>
+          <div className="font-semibold">Precio</div>
+          <div className="col-span-2 font-semibold">Comprador</div>
+          <div className="font-semibold">Teléfono</div>
+          <div className="font-semibold">Correo</div>
+          <div className="font-semibold">Saldo</div>
+        </div>
+
+        {filtrados.map((lote) => (
+          <FilaLote key={lote.id} lote={lote} />
+        ))}
       </div>
+    </div>
+  );
+}
+
+function Campo({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <label className="mb-1 block text-[11px] font-medium text-forest-700/60 sm:hidden">
+        {label}
+      </label>
+      {children}
     </div>
   );
 }
@@ -143,82 +151,98 @@ function FilaLote({ lote }: { lote: LoteAdminPlano }) {
   ].join("|");
 
   return (
-    <td colSpan={9} className="p-0">
-      <form
-        key={key}
-        action={actualizarLote}
-        className="grid grid-cols-9 items-center gap-2 px-4 py-2.5"
-      >
-        <input type="hidden" name="loteId" value={lote.id} />
-        <div className="font-medium text-forest-900">{lote.clave}</div>
+    <form
+      key={key}
+      action={actualizarLote}
+      className="grid grid-cols-2 gap-3 rounded-2xl border border-forest-900/10 bg-sand-50 p-4 sm:grid-cols-9 sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:border-b sm:p-0 sm:px-4 sm:py-2.5 sm:last:border-0"
+    >
+      <input type="hidden" name="loteId" value={lote.id} />
+      <div className="col-span-2 font-display text-lg font-semibold text-forest-900 sm:col-span-1 sm:text-sm sm:font-medium">
+        {lote.clave}
+      </div>
 
+      <Campo label="Estatus">
         <select
           name="estatus"
           defaultValue={lote.estatus}
-          className="col-span-1 rounded-lg border border-forest-800/20 bg-white px-2 py-1.5 text-xs"
+          className="w-full rounded-lg border border-forest-800/20 bg-white px-2 py-2 text-sm sm:py-1.5 sm:text-xs"
         >
           <option value="DISPONIBLE">Disponible</option>
           <option value="APARTADO">Apartado</option>
           <option value="VENDIDO">Vendido</option>
         </select>
+      </Campo>
 
+      <Campo label="Tipo de pago">
         <select
           name="tipoPago"
           defaultValue={lote.tipoPago ?? ""}
           title="Tipo de pago: marca Contado para saldar el lote sin crear plan de pagos"
-          className="col-span-1 rounded-lg border border-forest-800/20 bg-white px-2 py-1.5 text-xs"
+          className="w-full rounded-lg border border-forest-800/20 bg-white px-2 py-2 text-sm sm:py-1.5 sm:text-xs"
         >
           <option value="">Tipo —</option>
           <option value="CONTADO">Contado</option>
           <option value="CREDITO">Crédito</option>
         </select>
+      </Campo>
 
+      <Campo label="Precio">
         <input
           name="precio"
           type="number"
           defaultValue={lote.precio}
-          className="col-span-1 w-28 rounded-lg border border-forest-800/20 bg-white px-2 py-1.5 text-xs"
+          className="w-full rounded-lg border border-forest-800/20 bg-white px-2 py-2 text-sm sm:py-1.5 sm:text-xs"
         />
+      </Campo>
 
+      <Campo label="Comprador" className="col-span-2">
         <input
           name="compradorNombre"
           defaultValue={lote.compradorNombre ?? ""}
           placeholder="—"
-          className="col-span-2 rounded-lg border border-forest-800/20 bg-white px-2 py-1.5 text-xs"
+          className="w-full rounded-lg border border-forest-800/20 bg-white px-2 py-2 text-sm sm:py-1.5 sm:text-xs"
         />
+      </Campo>
 
+      <Campo label="Teléfono">
         <input
           name="compradorTelefono"
           defaultValue={lote.compradorTelefono ?? ""}
           placeholder="—"
-          className="col-span-1 rounded-lg border border-forest-800/20 bg-white px-2 py-1.5 text-xs"
+          className="w-full rounded-lg border border-forest-800/20 bg-white px-2 py-2 text-sm sm:py-1.5 sm:text-xs"
         />
+      </Campo>
 
+      <Campo label="Correo">
         <input
           name="compradorCorreo"
           defaultValue={lote.compradorCorreo ?? ""}
           placeholder="—"
-          className="col-span-1 rounded-lg border border-forest-800/20 bg-white px-2 py-1.5 text-xs"
+          className="w-full rounded-lg border border-forest-800/20 bg-white px-2 py-2 text-sm sm:py-1.5 sm:text-xs"
         />
+      </Campo>
 
-        <div className="text-xs text-forest-700/70">
+      <Campo label="Saldo">
+        <p className="text-sm text-forest-700/70 sm:text-xs">
           {formatoMoneda(lote.saldo)}
-        </div>
+        </p>
+      </Campo>
 
+      <div className="col-span-2 flex gap-2 pt-1 sm:col-span-2 sm:pt-0">
         <button
           type="submit"
-          className="justify-self-end rounded-full bg-forest-800 px-3 py-1.5 text-xs font-semibold text-sand-50 hover:bg-forest-700"
+          className="flex-1 rounded-full bg-forest-800 px-3 py-2 text-xs font-semibold text-sand-50 hover:bg-forest-700 sm:flex-none sm:py-1.5"
         >
           Guardar
         </button>
 
         <Link
           href={`/admin/lotes/${lote.id}`}
-          className="justify-self-end rounded-full border border-gold-500/50 px-3 py-1.5 text-xs font-semibold text-gold-600 hover:bg-gold-400/10"
+          className="flex-1 rounded-full border border-gold-500/50 px-3 py-2 text-center text-xs font-semibold text-gold-600 hover:bg-gold-400/10 sm:flex-none sm:py-1.5"
         >
           Cliente y pagos →
         </Link>
-      </form>
-    </td>
+      </div>
+    </form>
   );
 }

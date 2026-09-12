@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { logoutAdmin } from "../actions";
 import { LogoMark } from "@/components/logo";
+import { AdminMobileNav } from "@/components/admin-mobile-nav";
 
 export default async function AdminLayout({
   children,
@@ -53,8 +54,10 @@ export default async function AdminLayout({
             </button>
           </form>
         </header>
-        <main className="p-5 sm:p-10">{children}</main>
+        <main className="p-5 pb-24 sm:p-10">{children}</main>
       </div>
+
+      <AdminMobileNav />
     </div>
   );
 }
