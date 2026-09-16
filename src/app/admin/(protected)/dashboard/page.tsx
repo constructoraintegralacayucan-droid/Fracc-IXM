@@ -60,19 +60,34 @@ export default async function AdminDashboardPage({
         <StatCard label="Vendidos" value={String(stats.vendidos)} />
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Monto total del inventario"
-          value={formatoMoneda(stats.montoTotal)}
+          label="Cobrado este mes"
+          value={formatoMoneda(stats.cobradoEsteMes)}
+          tone="forest"
         />
         <StatCard
-          label="Total anticipos recibidos"
-          value={formatoMoneda(stats.anticipoTotal)}
-        />
-        <StatCard
-          label="Saldo pendiente total"
+          label="Saldo pendiente por cobrar"
           value={formatoMoneda(stats.saldoTotal)}
         />
+        <StatCard
+          label="Pagos próximos (7 días)"
+          value={String(stats.pagosProximos)}
+          tone="gold"
+        />
+        <StatCard
+          label="Pagos atrasados"
+          value={String(stats.pagosAtrasados)}
+          tone={stats.pagosAtrasados > 0 ? "alerta" : undefined}
+        />
+      </div>
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <QuickLink href="/admin/desarrollos" label="Fraccionamientos" />
+        <QuickLink href="/admin/lotes" label="Lotes" />
+        <QuickLink href="/admin/reservas" label="Clientes y solicitudes" />
+        <QuickLink href="/admin/colaboradores" label="Colaboradores" />
+        <QuickLink href="/admin/configuracion" label="Promociones y precios" />
       </div>
 
       <div className="mt-10 overflow-x-auto rounded-2xl border border-forest-900/10 bg-sand-50">
@@ -121,7 +136,7 @@ function StatCard({
 }: {
   label: string;
   value: string;
-  tone?: "forest" | "gold";
+  tone?: "forest" | "gold" | "alerta";
 }) {
   return (
     <div className="rounded-2xl border border-forest-900/10 bg-sand-50 p-5">
@@ -134,11 +149,24 @@ function StatCard({
             ? "text-forest-700"
             : tone === "gold"
               ? "text-gold-600"
-              : "text-forest-900"
+              : tone === "alerta"
+                ? "text-red-700"
+                : "text-forest-900"
         }`}
       >
         {value}
       </p>
     </div>
+  );
+}
+
+function QuickLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-full border border-forest-800/20 bg-sand-50 px-4 py-2 text-xs font-semibold text-forest-800 transition hover:border-forest-800/50 hover:bg-forest-800/5"
+    >
+      {label} →
+    </Link>
   );
 }

@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLotePorId } from "@/lib/data";
-import { calcularEstadoCuenta, precioVentaEfectivo } from "@/lib/pagos";
+import {
+  calcularEstadoCuenta,
+  precioVentaEfectivo,
+  CONCEPTO_PAGO_LABEL,
+} from "@/lib/pagos";
 import { PlanPagoForm } from "@/components/plan-pago-form";
 import { formatoFecha, formatoMoneda } from "@/lib/financiamiento";
 import { AsignarClienteForm } from "@/components/asignar-cliente-form";
@@ -259,9 +263,25 @@ export default async function AdminLoteDetailPage({
         </h2>
         <form
           action={registrarPago}
-          className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1.3fr_1fr_auto]"
+          className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-[1.1fr_1fr_1fr_1.3fr_1fr_auto]"
         >
           <input type="hidden" name="loteId" value={lote.id} />
+          <div>
+            <label className="mb-1 block text-xs font-medium text-forest-700/70">
+              Concepto
+            </label>
+            <select
+              name="concepto"
+              defaultValue="MENSUALIDAD"
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+            >
+              <option value="APARTADO">Apartado</option>
+              <option value="ENGANCHE">Enganche</option>
+              <option value="MENSUALIDAD">Mensualidad</option>
+              <option value="ABONO">Abono</option>
+              <option value="LIQUIDACION">Liquidación</option>
+            </select>
+          </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-forest-700/70">
               Cuota #
@@ -321,7 +341,7 @@ export default async function AdminLoteDetailPage({
               Registrar
             </button>
           </div>
-          <div className="col-span-2 sm:col-span-3 lg:col-span-5">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-6">
             <input
               name="notas"
               placeholder="Notas (opcional)"
@@ -334,6 +354,7 @@ export default async function AdminLoteDetailPage({
           <table className="w-full min-w-[500px] text-left text-sm">
             <thead>
               <tr className="border-b border-forest-900/10 text-xs uppercase text-forest-700/60">
+                <th className="px-4 py-2.5 font-semibold">Concepto</th>
                 <th className="px-4 py-2.5 font-semibold">Cuota</th>
                 <th className="px-4 py-2.5 font-semibold">Fecha</th>
                 <th className="px-4 py-2.5 font-semibold">Monto</th>
@@ -346,7 +367,7 @@ export default async function AdminLoteDetailPage({
             <tbody>
               {lote.pagos.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-4 text-forest-700/60">
+                  <td colSpan={8} className="px-4 py-4 text-forest-700/60">
                     Sin pagos registrados todavía.
                   </td>
                 </tr>
@@ -356,6 +377,9 @@ export default async function AdminLoteDetailPage({
                   key={p.id}
                   className="border-b border-forest-900/5 last:border-0"
                 >
+                  <td className="px-4 py-2.5 font-medium text-forest-900">
+                    {CONCEPTO_PAGO_LABEL[p.concepto] ?? p.concepto}
+                  </td>
                   <td className="px-4 py-2.5">{p.numeroCuota ?? "—"}</td>
                   <td className="px-4 py-2.5">{formatoFecha(p.fecha)}</td>
                   <td className="px-4 py-2.5">

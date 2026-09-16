@@ -13,7 +13,12 @@ import { calcularEstadoCuenta, precioVentaEfectivo } from "@/lib/pagos";
 import { formatoMoneda } from "@/lib/financiamiento";
 import { generarReciboPago } from "@/lib/recibo";
 import { emailHabilitado, enviarCorreo } from "@/lib/email";
-import type { EstatusLote, MetodoPago, TipoPago } from "@prisma/client";
+import type {
+  EstatusLote,
+  MetodoPago,
+  TipoPago,
+  ConceptoPago,
+} from "@prisma/client";
 
 export type LoginState = { ok: boolean; message: string };
 
@@ -151,6 +156,7 @@ export async function confirmarReserva(formData: FormData) {
         reservaId: reserva.id,
         monto: montoReserva,
         metodo,
+        concepto: "APARTADO",
         notas: "Apartado confirmado desde solicitud del sitio",
         registradoPor: admin.email,
       },
@@ -418,6 +424,14 @@ export async function registrarPago(formData: FormData) {
   const monto = Number(formData.get("monto") ?? 0);
   const fecha = String(formData.get("fecha") ?? "");
   const metodo = String(formData.get("metodo") ?? "EFECTIVO") as MetodoPago;
+  const conceptoRaw = String(formData.get("concepto") ?? "MENSUALIDAD");
+  const concepto = (
+    ["APARTADO", "ENGANCHE", "MENSUALIDAD", "ABONO", "LIQUIDACION"].includes(
+      conceptoRaw
+    )
+      ? conceptoRaw
+      : "MENSUALIDAD"
+  ) as ConceptoPago;
   const notas = String(formData.get("notas") ?? "").trim();
   const numeroCuotaRaw = formData.get("numeroCuota");
   const numeroCuota = numeroCuotaRaw ? Number(numeroCuotaRaw) : null;
@@ -438,6 +452,7 @@ export async function registrarPago(formData: FormData) {
       ].includes(metodo)
         ? metodo
         : "EFECTIVO",
+      concepto,
       notas: notas || null,
       numeroCuota: numeroCuota && numeroCuota > 0 ? numeroCuota : null,
       registradoPor: admin.email,

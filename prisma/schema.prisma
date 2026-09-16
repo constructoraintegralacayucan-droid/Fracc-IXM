@@ -39,6 +39,14 @@ enum MetodoPago {
   OTRO
 }
 
+enum ConceptoPago {
+  APARTADO
+  ENGANCHE
+  MENSUALIDAD
+  ABONO
+  LIQUIDACION
+}
+
 enum TipoOrdenPago {
   RESERVA
   CUOTA
@@ -132,6 +140,7 @@ model Pago {
   monto         Decimal    @db.Decimal(12, 2)
   fecha         DateTime   @default(now())
   metodo        MetodoPago @default(EFECTIVO)
+  concepto      ConceptoPago @default(MENSUALIDAD)
   notas         String?
   registradoPor String?
   ordenPago     OrdenPago?
@@ -258,6 +267,9 @@ model Desarrollo {
   slug              String    @unique
   nombre            String    @default("Fraccionamiento Ixmegallo")
   ubicacion         String    @default("Acayucan, Veracruz, México")
+  // Ciudad corta para encabezados ("LOTES EN ACAYUCAN"); ubicacion es la
+  // dirección completa y no siempre es fácil de acortar automáticamente.
+  ciudad            String    @default("Acayucan")
   moneda            String    @default("MXN")
   descripcion       String    @default("")
   imagenPortada     String?
@@ -267,6 +279,12 @@ model Desarrollo {
   // mostrado en todos los lotes de golpe, sin editarlos uno por uno.
   precioContadoDefault Decimal @default(85000) @db.Decimal(12, 2)
   precioCreditoDefault Decimal @default(120000) @db.Decimal(12, 2)
+  // Superficie y medidas por defecto de un lote (la mayoría de los lotes
+  // son del mismo tamaño). Un lote puede tener su propio areaM2/frenteM/
+  // fondoM si es distinto — ver Lote.
+  areaM2Default     Float     @default(200)
+  frenteMDefault    Float     @default(10)
+  fondoMDefault     Float     @default(20)
   plazosMeses       Int[]     @default([6, 12, 18, 24, 36, 48, 60, 72, 84, 96])
   plazoMaxPublico   Int       @default(24)
   plazoRecomendado  Int       @default(12)

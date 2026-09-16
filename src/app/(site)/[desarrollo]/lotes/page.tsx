@@ -37,17 +37,29 @@ export default async function LotesPage({
       disponiblesEnManzana,
       lotes: m.lotes.map((l) => {
         const disponible = l.estatus === "DISPONIBLE";
+        const precioContadoDefault = Number(config.precioContadoDefault);
+        const precioContado = disponible
+          ? Number(l.precioContado ?? precioContadoDefault)
+          : null;
+        const enPromocion =
+          disponible && l.precioContado != null && precioContado !== null
+            ? precioContado < precioContadoDefault
+            : false;
         return {
           clave: l.clave,
           manzanaNumero: m.numero,
           disponible,
-          numero: disponible ? l.numero : null,
-          precioContado: disponible
-            ? Number(l.precioContado ?? config.precioContadoDefault)
-            : null,
+          numero: l.numero,
+          estatus: l.estatus,
+          precioContado,
           precioCredito: disponible
             ? Number(l.precioCredito ?? config.precioCreditoDefault)
             : null,
+          precioContadoOriginal: enPromocion ? precioContadoDefault : null,
+          enPromocion,
+          areaM2: l.areaM2 ?? config.areaM2Default,
+          frenteM: l.frenteM ?? config.frenteMDefault,
+          fondoM: l.fondoM ?? config.fondoMDefault,
         };
       }),
     };
@@ -60,20 +72,21 @@ export default async function LotesPage({
   return (
     <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
-        Mapa interactivo
+        Elige tu lote
       </p>
       <h1 className="mt-3 font-display text-4xl font-semibold text-forest-900">
         Lotes en {config.nombre}
       </h1>
       <p className="mt-3 max-w-2xl text-forest-700">
-        Selecciona un lote disponible para ver su precio, simular tu
-        financiamiento y enviar tu solicitud de apartado.
+        Elige un lote disponible para ver su ficha completa, calcular tu
+        mensualidad y apartarlo.
       </p>
 
       <div className="mt-10">
         <LoteMap
           manzanas={manzanasPlano}
           desarrolloSlug={slug}
+          desarrolloNombre={config.nombre}
           config={{
             moneda: config.moneda,
             inicialMinimoPct: config.inicialMinimoPct,

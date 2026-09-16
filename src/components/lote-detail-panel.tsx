@@ -15,23 +15,43 @@ export type LotePlano = {
   manzanaNumero: number;
   disponible: boolean;
   numero: number | null;
+  estatus: "DISPONIBLE" | "APARTADO" | "VENDIDO";
   precioContado: number | null;
   precioCredito: number | null;
+  precioContadoOriginal: number | null;
+  enPromocion: boolean;
+  areaM2: number;
+  frenteM: number;
+  fondoM: number;
 };
 
 const initialState: CrearReservaState = { ok: false, message: "" };
+
+type Paso = "ficha" | "simulador" | "apartado";
+
+function construirLinkWhatsapp(
+  whatsapp: string,
+  mensaje: string
+): string | null {
+  const digitos = whatsapp.replace(/\D/g, "");
+  if (!digitos) return null;
+  const numero = digitos.startsWith("52") ? digitos : `52${digitos}`;
+  return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+}
 
 export function LoteDetailPanel({
   lote,
   disponiblesEnManzana,
   config,
   desarrolloSlug,
+  desarrolloNombre,
   onClose,
 }: {
   lote: LotePlano;
   disponiblesEnManzana: number;
   config: ProyectoConfigPlano;
   desarrolloSlug: string;
+  desarrolloNombre: string;
   onClose: () => void;
 }) {
   // Se congelan al abrir el panel: al enviar la solicitud de apartado, el
@@ -41,19 +61,24 @@ export function LoteDetailPanel({
   // cuando el cliente más necesita verlo.
   const [precioContado] = useState(lote.precioContado ?? 0);
   const [precioCredito] = useState(lote.precioCredito ?? 0);
-  const [tipoPago, setTipoPago] = useState<"CONTADO" | "CREDITO">("CONTADO");
-  const precio = tipoPago === "CONTADO" ? precioContado : precioCredito;
 
-  const inicialMinima = Math.round(
+  const [paso, setPaso] = useState<Paso>("ficha");
+  const [tipoPago, setTipoPago] = useState<"CONTADO" | "CREDITO">("CONTADO");
+
+  const engancheMinimo = Math.round(
     (precioCredito * config.inicialMinimoPct) / 100
   );
-  const [inicial, setInicial] = useState(inicialMinima);
+  const [inicial, setInicial] = useState(engancheMinimo);
   const plazosDisponibles =
     config.plazosMeses.length > 0 ? config.plazosMeses : [config.plazoRecomendado];
+  const plazoMax = Math.max(...plazosDisponibles);
   const plazoInicial = plazosDisponibles.includes(config.plazoRecomendado)
     ? config.plazoRecomendado
     : plazosDisponibles[0];
   const [plazoMeses, setPlazoMeses] = useState(plazoInicial);
+
+  const mensualidadDesde =
+    plazoMax > 0 ? Math.round((precioCredito - engancheMinimo) / plazoMax) : 0;
 
   const resultado = useMemo(
     () =>
@@ -68,19 +93,25 @@ export function LoteDetailPanel({
 
   const [state, formAction] = useActionState(crearReserva, initialState);
 
-  const whatsappDigitos = config.whatsapp.replace(/\D/g, "");
-  const whatsappLink = whatsappDigitos
-    ? `https://wa.me/${
-        whatsappDigitos.startsWith("52") ? whatsappDigitos : `52${whatsappDigitos}`
-      }?text=${encodeURIComponent(
-        `Hola, ya envié mi apartado del lote ${lote.clave} (Manzana ${lote.manzanaNumero}). Adjunto mi comprobante de pago.`
-      )}`
+  const folio = state.reservaId
+    ? state.reservaId.slice(-8).toUpperCase()
     : null;
+
+  const linkPedirInfo = construirLinkWhatsapp(
+    config.whatsapp,
+    `Hola, quiero información sobre el Lote ${lote.numero}, Manzana ${lote.manzanaNumero} de ${desarrolloNombre}.`
+  );
+  const linkComprobante = construirLinkWhatsapp(
+    config.whatsapp,
+    `Hola, ya envié mi apartado del lote ${lote.clave} (Manzana ${lote.manzanaNumero}). Adjunto mi comprobante de pago.`
+  );
 
   const avisoDisponibilidad =
     disponiblesEnManzana === 1
       ? "¡Solo queda 1 lote disponible en esta manzana!"
       : `Quedan ${disponiblesEnManzana} lotes disponibles en esta manzana`;
+
+  const precioApartado = tipoPago === "CONTADO" ? precioContado : precioCredito;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
@@ -97,59 +128,57 @@ export function LoteDetailPanel({
               Manzana {lote.manzanaNumero} · Lote {lote.numero}
             </p>
             <h3 className="mt-1 font-display text-2xl font-semibold text-forest-900">
-              Lote disponible
+              {paso === "ficha" && "Ficha del lote"}
+              {paso === "simulador" && "Calcular financiamiento"}
+              {paso === "apartado" && "Apartar este lote"}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-forest-700 hover:bg-forest-900/5"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-forest-700 hover:bg-forest-900/5"
             aria-label="Cerrar"
           >
             ✕
           </button>
         </div>
 
-        <span className="inline-block rounded-full bg-gold-400/25 px-3 py-1 text-xs font-semibold text-sand-900">
-          {avisoDisponibilidad}
-        </span>
-
-        <p className="mt-4 font-display text-3xl font-semibold text-forest-900">
-          {formatoMoneda(precio, config.moneda)}
-        </p>
-
-        <div className="mt-6 flex gap-2 rounded-full bg-forest-900/5 p-1 text-sm">
+        {paso !== "ficha" && !state.ok && (
           <button
-            onClick={() => setTipoPago("CONTADO")}
-            className={`flex-1 rounded-full py-2 font-medium transition ${
-              tipoPago === "CONTADO"
-                ? "bg-forest-800 text-sand-50"
-                : "text-forest-800"
-            }`}
+            onClick={() => setPaso("ficha")}
+            className="mb-4 text-xs font-semibold text-forest-700/70 hover:text-forest-900"
           >
-            Contado
+            ← Volver a la ficha
           </button>
-          <button
-            onClick={() => setTipoPago("CREDITO")}
-            className={`flex-1 rounded-full py-2 font-medium transition ${
-              tipoPago === "CREDITO"
-                ? "bg-forest-800 text-sand-50"
-                : "text-forest-800"
-            }`}
-          >
-            Crédito
-          </button>
-        </div>
+        )}
 
-        {tipoPago === "CREDITO" && (
-          <div className="mt-5 space-y-5">
+        {paso === "ficha" && (
+          <FichaLote
+            lote={lote}
+            precioContado={precioContado}
+            precioCredito={precioCredito}
+            engancheMinimo={engancheMinimo}
+            mensualidadDesde={mensualidadDesde}
+            moneda={config.moneda}
+            avisoDisponibilidad={avisoDisponibilidad}
+            linkPedirInfo={linkPedirInfo}
+            onCalcular={() => setPaso("simulador")}
+            onApartar={() => {
+              setTipoPago("CONTADO");
+              setPaso("apartado");
+            }}
+          />
+        )}
+
+        {paso === "simulador" && (
+          <div className="space-y-5">
             <div>
               <label className="mb-2 block text-sm font-medium text-forest-800">
                 Enganche (mínimo {config.inicialMinimoPct}%:{" "}
-                {formatoMoneda(inicialMinima, config.moneda)})
+                {formatoMoneda(engancheMinimo, config.moneda)})
               </label>
               <input
                 type="range"
-                min={inicialMinima}
+                min={engancheMinimo}
                 max={precioCredito}
                 step={500}
                 value={inicial}
@@ -168,7 +197,7 @@ export function LoteDetailPanel({
               <select
                 value={plazoMeses}
                 onChange={(e) => setPlazoMeses(Number(e.target.value))}
-                className="w-full rounded-xl border border-forest-800/20 bg-sand-50 px-3.5 py-2.5 text-sm"
+                className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
               >
                 {plazosDisponibles.map((p) => (
                   <option key={p} value={p}>
@@ -178,133 +207,347 @@ export function LoteDetailPanel({
               </select>
             </div>
 
+            <dl className="grid grid-cols-2 gap-3 rounded-2xl bg-white p-4 text-sm">
+              <Dato label="Precio del lote" valor={formatoMoneda(precioCredito, config.moneda)} />
+              <Dato label="Enganche" valor={formatoMoneda(inicial, config.moneda)} />
+              <Dato label="Cantidad financiada" valor={formatoMoneda(resultado.aFinanciar, config.moneda)} />
+              <Dato label="Número de mensualidades" valor={String(plazoMeses)} />
+            </dl>
+
             <div className="rounded-2xl bg-forest-900 p-5 text-sand-100">
               <p className="text-xs uppercase tracking-wide text-sand-300">
-                Cuota mensual
+                Mensualidad
               </p>
               <p className="font-display text-3xl font-semibold text-sand-50">
                 {formatoMoneda(resultado.cuotaMensual, config.moneda)}
               </p>
               <p className="mt-1 text-xs text-sand-300">
-                A financiar: {formatoMoneda(resultado.aFinanciar, config.moneda)} ·
+                Total a pagar: {formatoMoneda(resultado.totalPagado, config.moneda)} ·
                 Sin intereses
               </p>
             </div>
+
+            <button
+              onClick={() => {
+                setTipoPago("CREDITO");
+                setPaso("apartado");
+              }}
+              className="w-full rounded-full bg-gold-500 py-3 text-sm font-semibold text-forest-950 transition hover:bg-gold-400"
+            >
+              Apartar con este plan
+            </button>
           </div>
         )}
 
-        <form action={formAction} className="mt-7 space-y-4">
-          <input type="hidden" name="desarrolloSlug" value={desarrolloSlug} />
-          <input type="hidden" name="clave" value={lote.clave} />
-          <input type="hidden" name="planTipoPago" value={tipoPago} />
-          {tipoPago === "CREDITO" && (
-            <>
-              <input type="hidden" name="plazoMeses" value={plazoMeses} />
-              <input type="hidden" name="inicialMonto" value={inicial} />
-            </>
-          )}
-
-          <p className="text-sm font-semibold text-forest-900">
-            Aparta este lote
-          </p>
-          <div className="grid gap-3">
-            <input
-              name="nombre"
-              required
-              placeholder="Nombre completo"
-              className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
-            />
-            <input
-              name="telefono"
-              required
-              placeholder="Teléfono / WhatsApp"
-              className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
-            />
-            <input
-              name="correo"
-              type="email"
-              placeholder="Correo (opcional)"
-              className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
-            />
-            <div>
-              <label className="mb-1 block text-xs font-medium text-forest-700/70">
-                Monto de apartado (mínimo{" "}
-                {formatoMoneda(config.reservaMinima, config.moneda)})
-              </label>
-              <input
-                name="montoReserva"
-                type="number"
-                min={config.reservaMinima}
-                defaultValue={config.reservaMinima}
-                required
-                className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
-              />
-            </div>
-          </div>
-
-          <SubmitButton />
-
-          {state.message && (
-            <p
-              className={`text-sm ${
-                state.ok ? "text-forest-700" : "text-red-700"
-              }`}
-            >
-              {state.message}
-            </p>
-          )}
-        </form>
-
-        {state.ok && (
-          <div className="mt-4 space-y-4">
-            {state.checkoutUrl && (
-              <a
-                href={state.checkoutUrl}
-                className="block w-full rounded-full bg-forest-800 py-3 text-center text-sm font-semibold text-sand-50 transition hover:bg-forest-700"
-              >
-                Pagar apartado ahora con tarjeta
-              </a>
-            )}
-
-            {config.datosBancarios && (
-              <div className="rounded-2xl border border-forest-900/10 bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-forest-700/60">
-                  O transfiere tu apartado a
+        {paso === "apartado" && (
+          <div>
+            {!state.ok && (
+              <div className="mb-5 rounded-2xl border border-forest-900/10 bg-white p-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-forest-700/60">
+                  Resumen
                 </p>
-                <p className="mt-2 whitespace-pre-line text-sm text-forest-800">
-                  {config.datosBancarios}
-                </p>
+                <dl className="space-y-1.5 text-sm">
+                  <RenglonResumen etiqueta="Fraccionamiento" valor={desarrolloNombre} />
+                  <RenglonResumen etiqueta="Lote" valor={String(lote.numero)} />
+                  <RenglonResumen etiqueta="Manzana" valor={String(lote.manzanaNumero)} />
+                  <RenglonResumen
+                    etiqueta="Forma de pago"
+                    valor={
+                      <span className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setTipoPago("CONTADO")}
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            tipoPago === "CONTADO"
+                              ? "bg-forest-800 text-sand-50"
+                              : "bg-forest-900/5 text-forest-700"
+                          }`}
+                        >
+                          Contado
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTipoPago("CREDITO")}
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            tipoPago === "CREDITO"
+                              ? "bg-forest-800 text-sand-50"
+                              : "bg-forest-900/5 text-forest-700"
+                          }`}
+                        >
+                          Crédito
+                        </button>
+                      </span>
+                    }
+                  />
+                  <RenglonResumen
+                    etiqueta="Precio"
+                    valor={formatoMoneda(precioApartado, config.moneda)}
+                  />
+                  <RenglonResumen
+                    etiqueta="Monto del apartado"
+                    valor={`desde ${formatoMoneda(config.reservaMinima, config.moneda)}`}
+                  />
+                </dl>
               </div>
             )}
 
-            {state.reservaId && (
-              <div className="rounded-2xl border border-forest-900/10 bg-white p-4">
-                <ComprobanteUploadForm reservaId={state.reservaId} />
-              </div>
+            {!state.ok && (
+              <form action={formAction} className="space-y-4">
+                <input type="hidden" name="desarrolloSlug" value={desarrolloSlug} />
+                <input type="hidden" name="clave" value={lote.clave} />
+                <input type="hidden" name="planTipoPago" value={tipoPago} />
+                {tipoPago === "CREDITO" && (
+                  <>
+                    <input type="hidden" name="plazoMeses" value={plazoMeses} />
+                    <input type="hidden" name="inicialMonto" value={inicial} />
+                  </>
+                )}
+
+                <p className="text-sm font-semibold text-forest-900">
+                  Tus datos
+                </p>
+                <div className="grid gap-3">
+                  <input
+                    name="nombre"
+                    required
+                    placeholder="Nombre completo"
+                    className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+                  />
+                  <input
+                    name="telefono"
+                    required
+                    placeholder="Teléfono / WhatsApp"
+                    className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+                  />
+                  <input
+                    name="correo"
+                    type="email"
+                    placeholder="Correo (opcional)"
+                    className="rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+                  />
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-forest-700/70">
+                      Monto de apartado (mínimo{" "}
+                      {formatoMoneda(config.reservaMinima, config.moneda)})
+                    </label>
+                    <input
+                      name="montoReserva"
+                      type="number"
+                      min={config.reservaMinima}
+                      defaultValue={config.reservaMinima}
+                      required
+                      className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <SubmitButton />
+
+                {state.message && (
+                  <p className="text-sm text-red-700">{state.message}</p>
+                )}
+              </form>
             )}
 
-            {whatsappLink && (
-              <div className="rounded-2xl border border-gold-500/30 bg-gold-400/10 p-4">
-                <a
-                  href={whatsappLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full rounded-full bg-[#25D366] py-2.5 text-center text-sm font-semibold text-white transition hover:brightness-95"
-                >
-                  Enviar comprobante por WhatsApp
-                </a>
-                <p className="mt-2 text-xs text-forest-700/70">
-                  <strong>Importante:</strong> en el chat de WhatsApp con
-                  nosotros, desactiva los &ldquo;mensajes temporales&rdquo;
-                  (que desaparecen). Necesitamos conservar el historial
-                  completo de la conversación por logística y seguimiento de
-                  tu apartado.
-                </p>
+            {state.ok && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-forest-300 bg-forest-100 p-5 text-center">
+                  <p className="text-sm font-semibold text-forest-800">
+                    {state.message}
+                  </p>
+                  {folio && (
+                    <p className="mt-2 text-xs uppercase tracking-wide text-forest-700/70">
+                      Folio de operación:{" "}
+                      <span className="font-mono font-bold text-forest-900">
+                        {folio}
+                      </span>
+                    </p>
+                  )}
+                </div>
+
+                {state.checkoutUrl && (
+                  <a
+                    href={state.checkoutUrl}
+                    className="block w-full rounded-full bg-forest-800 py-3 text-center text-sm font-semibold text-sand-50 transition hover:bg-forest-700"
+                  >
+                    Pagar apartado ahora con tarjeta
+                  </a>
+                )}
+
+                {config.datosBancarios && (
+                  <div className="rounded-2xl border border-forest-900/10 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-forest-700/60">
+                      O transfiere tu apartado a
+                    </p>
+                    <p className="mt-2 whitespace-pre-line text-sm text-forest-800">
+                      {config.datosBancarios}
+                    </p>
+                  </div>
+                )}
+
+                {state.reservaId && (
+                  <div className="rounded-2xl border border-forest-900/10 bg-white p-4">
+                    <ComprobanteUploadForm reservaId={state.reservaId} />
+                  </div>
+                )}
+
+                {linkComprobante && (
+                  <div className="rounded-2xl border border-gold-500/30 bg-gold-400/10 p-4">
+                    <a
+                      href={linkComprobante}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full rounded-full bg-[#25D366] py-2.5 text-center text-sm font-semibold text-white transition hover:brightness-95"
+                    >
+                      Enviar comprobante por WhatsApp
+                    </a>
+                    <p className="mt-2 text-xs text-forest-700/70">
+                      <strong>Importante:</strong> en el chat de WhatsApp con
+                      nosotros, desactiva los &ldquo;mensajes
+                      temporales&rdquo; (que desaparecen). Necesitamos
+                      conservar el historial completo de la conversación por
+                      logística y seguimiento de tu apartado.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function FichaLote({
+  lote,
+  precioContado,
+  precioCredito,
+  engancheMinimo,
+  mensualidadDesde,
+  moneda,
+  avisoDisponibilidad,
+  linkPedirInfo,
+  onCalcular,
+  onApartar,
+}: {
+  lote: LotePlano;
+  precioContado: number;
+  precioCredito: number;
+  engancheMinimo: number;
+  mensualidadDesde: number;
+  moneda: string;
+  avisoDisponibilidad: string;
+  linkPedirInfo: string | null;
+  onCalcular: () => void;
+  onApartar: () => void;
+}) {
+  return (
+    <div>
+      <span className="inline-block rounded-full bg-gold-400/25 px-3 py-1 text-xs font-semibold text-sand-900">
+        {avisoDisponibilidad}
+      </span>
+
+      <p className="mt-4 text-sm text-forest-700/80">
+        {lote.areaM2} m² · {lote.frenteM} × {lote.fondoM} m
+      </p>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-xl bg-white p-3.5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-forest-700/60">
+            Precio de contado
+          </p>
+          {lote.enPromocion && lote.precioContadoOriginal != null && (
+            <p className="text-xs text-forest-700/50 line-through">
+              {formatoMoneda(lote.precioContadoOriginal, moneda)}
+            </p>
+          )}
+          <p className="font-display text-xl font-semibold text-forest-900">
+            {formatoMoneda(precioContado, moneda)}
+          </p>
+        </div>
+        <div className="rounded-xl bg-white p-3.5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-forest-700/60">
+            Precio financiado
+          </p>
+          <p className="font-display text-xl font-semibold text-forest-900">
+            {formatoMoneda(precioCredito, moneda)}
+          </p>
+        </div>
+        <div className="rounded-xl bg-white p-3.5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-forest-700/60">
+            Enganche desde
+          </p>
+          <p className="font-display text-lg font-semibold text-forest-900">
+            {formatoMoneda(engancheMinimo, moneda)}
+          </p>
+        </div>
+        <div className="rounded-xl bg-white p-3.5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-forest-700/60">
+            Mensualidad desde
+          </p>
+          <p className="font-display text-lg font-semibold text-forest-900">
+            {formatoMoneda(mensualidadDesde, moneda)}
+          </p>
+        </div>
+      </div>
+
+      {/* Espacio preparado para fotos, video o ubicación del lote, cuando
+          estén disponibles. Sin contenido de relleno mientras tanto. */}
+      <div className="mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-forest-900/15 bg-forest-900/[0.02] text-xs text-forest-700/40">
+        Fotos, video y ubicación — próximamente
+      </div>
+
+      <div className="mt-6 grid gap-2.5">
+        <button
+          onClick={onCalcular}
+          className="w-full rounded-full border border-forest-800 py-3 text-sm font-semibold text-forest-800 transition hover:bg-forest-800/5"
+        >
+          Calcular financiamiento
+        </button>
+        <button
+          onClick={onApartar}
+          className="w-full rounded-full bg-gold-500 py-3 text-sm font-semibold text-forest-950 transition hover:bg-gold-400"
+        >
+          Apartar este lote
+        </button>
+        {linkPedirInfo && (
+          <a
+            href={linkPedirInfo}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full rounded-full py-2.5 text-center text-sm font-semibold text-forest-700/70 transition hover:text-forest-900"
+          >
+            ¿Dudas? Pedir información por WhatsApp
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Dato({ label, valor }: { label: string; valor: string }) {
+  return (
+    <div>
+      <p className="text-[11px] font-medium uppercase tracking-wide text-forest-700/60">
+        {label}
+      </p>
+      <p className="font-semibold text-forest-900">{valor}</p>
+    </div>
+  );
+}
+
+function RenglonResumen({
+  etiqueta,
+  valor,
+}: {
+  etiqueta: string;
+  valor: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-forest-700/60">{etiqueta}</dt>
+      <dd className="font-semibold text-forest-900">{valor}</dd>
     </div>
   );
 }
@@ -317,7 +560,7 @@ function SubmitButton() {
       disabled={pending}
       className="w-full rounded-full bg-gold-500 py-3 text-sm font-semibold text-forest-950 transition hover:bg-gold-400 disabled:opacity-60"
     >
-      {pending ? "Enviando..." : "Solicitar apartado"}
+      {pending ? "Enviando..." : "Confirmar apartado"}
     </button>
   );
 }

@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "ConceptoPago" AS ENUM ('APARTADO', 'ENGANCHE', 'MENSUALIDAD', 'ABONO', 'LIQUIDACION');
+
+-- AlterTable
+ALTER TABLE "Pago" ADD COLUMN "concepto" "ConceptoPago" NOT NULL DEFAULT 'MENSUALIDAD';

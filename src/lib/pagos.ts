@@ -171,3 +171,11 @@ export function calcularEstadoCuenta(
     calendario,
   };
 }
+
+export const CONCEPTO_PAGO_LABEL: Record<string, string> = {
+  APARTADO: "Apartado",
+  ENGANCHE: "Enganche",
+  MENSUALIDAD: "Mensualidad",
+  ABONO: "Abono",
+  LIQUIDACION: "Liquidación",
+};

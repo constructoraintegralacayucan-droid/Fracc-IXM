@@ -51,14 +51,14 @@ export function SiteFooter({
             {base && (
               <li>
                 <Link href={`${base}/lotes`} className="hover:text-gold-400">
-                  Mapa de lotes
+                  Ver lotes
                 </Link>
               </li>
             )}
             {base && (
               <li>
                 <a href="#financiamiento" className="hover:text-gold-400">
-                  Planes de financiamiento
+                  Calcular mensualidad
                 </a>
               </li>
             )}

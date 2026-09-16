@@ -3,15 +3,23 @@ import { notFound } from "next/navigation";
 import {
   getDesarrolloBySlug,
   getPrecioDesde,
+  getResumenHero,
   getGaleriaImagenes,
   getTestimoniosAprobados,
 } from "@/lib/data";
-import { formatoMoneda } from "@/lib/financiamiento";
 import { GenericCalculator } from "@/components/generic-calculator";
 import { CountdownBanner } from "@/components/countdown-banner";
 import { HeroCarousel } from "@/components/hero-carousel";
 
 export const dynamic = "force-dynamic";
+
+function formatoMonedaDecimal(valor: number, moneda = "MXN") {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: moneda,
+    maximumFractionDigits: 2,
+  }).format(valor);
+}
 
 export default async function DesarrolloPage({
   params,
@@ -22,8 +30,9 @@ export default async function DesarrolloPage({
   const config = await getDesarrolloBySlug(slug);
   if (!config) notFound();
 
-  const [precioDesde, imagenes, testimonios] = await Promise.all([
+  const [precioDesde, resumenHero, imagenes, testimonios] = await Promise.all([
     getPrecioDesde(config.id),
+    getResumenHero(config.id),
     getGaleriaImagenes(config.id),
     getTestimoniosAprobados(config.id),
   ]);
@@ -69,53 +78,59 @@ export default async function DesarrolloPage({
           </svg>
         )}
 
-        <div className="relative mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
+        <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gold-400">
-            Acayucan · Veracruz
-          </p>
-          <h1 className="mt-5 max-w-2xl font-display text-5xl font-semibold leading-[1.05] text-sand-50 sm:text-6xl">
             {config.nombre}
+          </p>
+          <h1 className="mt-4 max-w-2xl font-display text-4xl font-bold uppercase leading-[1.05] tracking-tight text-sand-50 sm:text-6xl">
+            Lotes en {config.ciudad}
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-sand-200">
-            {config.descripcion}
-          </p>
-          <p className="mt-4 max-w-xl font-display text-xl italic text-gold-400">
-            Empieza hoy el patrimonio de tu familia.
+
+          {resumenHero && resumenHero.precioDesde > 0 && (
+            <div className="mt-7 flex flex-wrap items-end gap-x-4 gap-y-1">
+              <p className="font-display text-4xl font-bold text-gold-400 sm:text-5xl">
+                Desde{" "}
+                {formatoMonedaDecimal(resumenHero.precioPorM2, config.moneda)}
+              </p>
+              <p className="pb-1.5 text-sm font-medium text-sand-300">
+                por m²
+              </p>
+            </div>
+          )}
+
+          <p className="mt-3 text-base text-sand-200 sm:text-lg">
+            Terrenos de {resumenHero?.areaM2 ?? 200} m² · {resumenHero?.frenteM ?? 10}{" "}
+            × {resumenHero?.fondoM ?? 20} m
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-4">
-            <Link
-              href={`/${slug}/lotes`}
-              className="rounded-full bg-gold-500 px-7 py-3.5 text-sm font-semibold text-forest-950 shadow-lg shadow-gold-500/20 transition hover:bg-gold-400"
-            >
-              Explorar mapa de lotes
-            </Link>
-            <a
-              href="#financiamiento"
-              className="rounded-full border border-sand-100/30 px-7 py-3.5 text-sm font-semibold text-sand-50 transition hover:border-sand-100/60"
-            >
-              Simular financiamiento
-            </a>
-          </div>
-
-          <div className="mt-16 flex flex-wrap items-center gap-6 border-t border-sand-100/15 pt-10">
-            <span className="rounded-full bg-gold-400/20 px-4 py-2 text-sm font-semibold text-gold-400">
-              Quedan pocos lotes disponibles
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <span className="rounded-full bg-sand-100/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-sand-100">
+              Financiamiento directo
             </span>
-            {precioDesde > 0 && (
-              <div>
-                <p className="font-display text-2xl font-semibold text-sand-50">
-                  Desde {formatoMoneda(precioDesde, config.moneda)}
-                </p>
-                <p className="text-xs uppercase tracking-wide text-sand-300">
-                  Precio por lote · en lotes seleccionados
-                </p>
-              </div>
+            {resumenHero && resumenHero.disponibles > 0 && (
+              <span className="rounded-full bg-gold-400/20 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-gold-400">
+                {resumenHero.disponibles} lotes disponibles
+              </span>
             )}
           </div>
 
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link
+              href={`/${slug}/lotes`}
+              className="rounded-full bg-gold-500 px-8 py-4 text-sm font-bold uppercase tracking-wide text-forest-950 shadow-lg shadow-gold-500/20 transition hover:bg-gold-400"
+            >
+              Ver lotes disponibles
+            </Link>
+            <a
+              href="#financiamiento"
+              className="rounded-full border border-sand-100/30 px-7 py-4 text-sm font-semibold text-sand-50 transition hover:border-sand-100/60"
+            >
+              Calcular mensualidad
+            </a>
+          </div>
+
           {config.disclaimer && (
-            <p className="mt-8 max-w-2xl text-xs leading-relaxed text-sand-400">
+            <p className="mt-10 max-w-2xl text-xs leading-relaxed text-sand-400">
               {config.disclaimer}
             </p>
           )}
@@ -130,6 +145,9 @@ export default async function DesarrolloPage({
           <h2 className="mt-3 font-display text-3xl font-semibold text-forest-900 sm:text-4xl">
             Un patrimonio pensado para crecer contigo
           </h2>
+          {config.descripcion && (
+            <p className="mt-4 text-forest-700">{config.descripcion}</p>
+          )}
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
@@ -219,14 +237,14 @@ export default async function DesarrolloPage({
             Aparta tu lote hoy mismo
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sand-300">
-            Elige tu lote en el mapa interactivo, arma tu plan de pagos y
-            envía tu solicitud de apartado en minutos.
+            Elige tu lote, calcula tu mensualidad y envía tu solicitud de
+            apartado en minutos.
           </p>
           <Link
             href={`/${slug}/lotes`}
             className="mt-8 inline-block rounded-full bg-gold-500 px-8 py-3.5 text-sm font-semibold text-forest-950 transition hover:bg-gold-400"
           >
-            Ir al mapa de lotes
+            Ver lotes disponibles
           </Link>
         </div>
       </section>

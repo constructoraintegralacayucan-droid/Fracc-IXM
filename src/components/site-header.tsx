@@ -24,13 +24,13 @@ export function SiteHeader({
               href={`${base}/lotes`}
               className="transition hover:text-gold-600"
             >
-              Mapa de lotes
+              Ver lotes
             </Link>
             <a
               href="#financiamiento"
               className="transition hover:text-gold-600"
             >
-              Financiamiento
+              Calcular mensualidad
             </a>
             <a href="#contacto" className="transition hover:text-gold-600">
               Contacto

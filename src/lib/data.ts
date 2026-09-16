@@ -74,7 +74,17 @@ export async function getStats(desarrolloId: string) {
       }),
     ]);
 
-  const saldoTotal = lotesVendidos.reduce((acc, lote) => {
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+  const en7Dias = new Date();
+  en7Dias.setDate(en7Dias.getDate() + 7);
+
+  let saldoTotal = 0;
+  let pagosProximos = 0;
+  let pagosAtrasados = 0;
+
+  for (const lote of lotesVendidos) {
     const tipoPagoEfectivo = lote.numPagosTotal ? "CREDITO" : lote.tipoPago;
     const precioVenta = precioVentaEfectivo(
       {
@@ -104,8 +114,21 @@ export async function getStats(desarrolloId: string) {
         numeroCuota: p.numeroCuota,
       }))
     );
-    return acc + estado.saldoPendiente;
-  }, 0);
+    saldoTotal += estado.saldoPendiente;
+    if (estado.enAtraso) {
+      pagosAtrasados += 1;
+    } else if (
+      estado.proximaFechaVencimiento &&
+      estado.proximaFechaVencimiento <= en7Dias
+    ) {
+      pagosProximos += 1;
+    }
+  }
+
+  const cobradoEsteMes = await prisma.pago.aggregate({
+    where: { lote: { desarrolloId }, fecha: { gte: inicioMes } },
+    _sum: { monto: true },
+  });
 
   return {
     total,
@@ -115,6 +138,9 @@ export async function getStats(desarrolloId: string) {
     montoTotal: Number(montos._sum.precio ?? 0),
     anticipoTotal: Number(montos._sum.anticipo ?? 0),
     saldoTotal,
+    cobradoEsteMes: Number(cobradoEsteMes._sum.monto ?? 0),
+    pagosProximos,
+    pagosAtrasados,
   };
 }
 
@@ -171,6 +197,33 @@ export async function getPrecioDesde(desarrolloId: string) {
   );
 
   return precios.length > 0 ? Math.min(...precios) : defaultPrecio;
+}
+
+/** Resumen para el hero de la portada: precio desde, precio por m², medidas
+ * y cuántos lotes hay disponibles ahora mismo (para no inventar cifras). */
+export async function getResumenHero(desarrolloId: string) {
+  const [desarrollo, disponibles] = await Promise.all([
+    prisma.desarrollo.findUnique({ where: { id: desarrolloId } }),
+    prisma.lote.count({ where: { desarrolloId, estatus: "DISPONIBLE" } }),
+  ]);
+  if (!desarrollo) {
+    return null;
+  }
+
+  const precioDesde = await getPrecioDesde(desarrolloId);
+  const areaM2 = desarrollo.areaM2Default;
+  const precioPorM2 = areaM2 > 0 ? precioDesde / areaM2 : 0;
+
+  return {
+    precioDesde,
+    precioPorM2,
+    areaM2,
+    frenteM: desarrollo.frenteMDefault,
+    fondoM: desarrollo.fondoMDefault,
+    disponibles,
+    moneda: desarrollo.moneda,
+    ciudad: desarrollo.ciudad,
+  };
 }
 
 export async function getResumenPorManzana(desarrolloId: string) {
