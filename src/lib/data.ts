@@ -288,6 +288,7 @@ export async function getLotePorId(id: string) {
       desarrollo: true,
       cliente: true,
       pagos: { orderBy: { fecha: "asc" } },
+      reservas: { orderBy: { createdAt: "desc" } },
     },
   });
 }

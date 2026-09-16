@@ -12,6 +12,7 @@ import { AsignarClienteForm } from "@/components/asignar-cliente-form";
 import { VentaLoteForm } from "@/components/venta-lote-form";
 import {
   actualizarPreciosLote,
+  actualizarNotasLote,
   registrarPago,
   eliminarPago,
   desasignarCliente,
@@ -74,6 +75,8 @@ export default async function AdminLoteDetailPage({
     0
   );
 
+  const comprobantes = lote.reservas.filter((r) => r.comprobantePago);
+
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
@@ -83,14 +86,20 @@ export default async function AdminLoteDetailPage({
         >
           ← Volver a lotes
         </Link>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-forest-900">
-          Lote {lote.clave}
+        <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-gold-600">
+          {lote.cliente
+            ? "Cliente"
+            : lote.compradorNombre
+              ? "Comprador (sin cuenta)"
+              : `Lote ${lote.clave}`}
+        </p>
+        <h1 className="mt-1 font-display text-2xl font-semibold text-forest-900">
+          {lote.cliente?.nombre ?? lote.compradorNombre ?? `Lote ${lote.clave}`}
         </h1>
         <p className="mt-1 text-sm text-forest-700/70">
-          Manzana {lote.manzana.numero} ·{" "}
+          {lote.estatus} ·{" "}
           {formatoMoneda(precioVenta, config.moneda)}
-          {tipoPagoEfectivo === "CONTADO" ? " de contado" : " a crédito"} ·{" "}
-          {lote.estatus}
+          {tipoPagoEfectivo === "CONTADO" ? " de contado" : " a crédito"}
         </p>
       </div>
 
@@ -103,18 +112,45 @@ export default async function AdminLoteDetailPage({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Total pagado" value={formatoMoneda(estado.totalPagado, config.moneda)} tone="forest" />
-        <Stat label="Saldo pendiente" value={formatoMoneda(estado.saldoPendiente, config.moneda)} />
-        <Stat label="Avance" value={`${estado.porcentajePagado}%`} tone="gold" />
-        <Stat
-          label="Cuotas pagadas"
-          value={
-            lote.numPagosTotal
+      <div className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4">
+          <Dato label="Fraccionamiento" valor={lote.desarrollo.nombre} />
+          <Dato label="Manzana" valor={String(lote.manzana.numero)} />
+          <Dato label="Lote" valor={String(lote.numero)} />
+          <Dato
+            label="Precio contratado"
+            valor={formatoMoneda(precioVenta, config.moneda)}
+          />
+          <Dato
+            label="Enganche"
+            valor={formatoMoneda(Number(lote.anticipo), config.moneda)}
+          />
+          <Dato
+            label="Total pagado"
+            valor={formatoMoneda(estado.totalPagado, config.moneda)}
+          />
+          <Dato
+            label="Saldo"
+            valor={formatoMoneda(estado.saldoPendiente, config.moneda)}
+          />
+          <Dato
+            label="Próximo pago"
+            valor={
+              estado.proximaFechaVencimiento
+                ? `${formatoMoneda(estado.proximoMontoVencimiento ?? 0, config.moneda)} · ${formatoFecha(estado.proximaFechaVencimiento)}`
+                : "—"
+            }
+          />
+        </dl>
+        <div className="mt-4 flex flex-wrap gap-4 border-t border-forest-900/10 pt-4 text-xs text-forest-700/60">
+          <span>Avance: {estado.porcentajePagado}%</span>
+          <span>
+            Cuotas pagadas:{" "}
+            {lote.numPagosTotal
               ? `${estado.cuotasPagadas} / ${lote.numPagosTotal}`
-              : String(estado.cuotasPagadas)
-          }
-        />
+              : estado.cuotasPagadas}
+          </span>
+        </div>
       </div>
 
       <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
@@ -141,7 +177,7 @@ export default async function AdminLoteDetailPage({
 
       <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
         <h2 className="font-display text-lg font-semibold text-forest-900">
-          Cliente
+          Datos de contacto
         </h2>
 
         {lote.cliente ? (
@@ -173,6 +209,33 @@ export default async function AdminLoteDetailPage({
               compradorTelefono={lote.compradorTelefono}
               compradorCorreo={lote.compradorCorreo}
             />
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <h2 className="font-display text-lg font-semibold text-forest-900">
+          Comprobantes
+        </h2>
+        {comprobantes.length === 0 ? (
+          <p className="mt-3 text-sm text-forest-700/50">
+            Sin comprobantes subidos por el cliente todavía.
+          </p>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {comprobantes.map((r) => (
+              <a
+                key={r.id}
+                href={r.comprobantePago!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-forest-900/10 bg-white p-3 text-center text-xs font-semibold text-gold-600 hover:underline"
+              >
+                {formatoFecha(r.createdAt)}
+                <br />
+                Ver comprobante
+              </a>
+            ))}
           </div>
         )}
       </section>
@@ -414,35 +477,40 @@ export default async function AdminLoteDetailPage({
           </table>
         </div>
       </section>
+
+      <section className="rounded-2xl border border-forest-900/10 bg-sand-50 p-6">
+        <h2 className="font-display text-lg font-semibold text-forest-900">
+          Notas
+        </h2>
+        <p className="mt-1 text-sm text-forest-700/70">
+          Notas internas sobre este lote o cliente, solo visibles para el
+          equipo administrativo.
+        </p>
+        <form action={actualizarNotasLote} className="mt-4 space-y-3">
+          <input type="hidden" name="loteId" value={lote.id} />
+          <textarea
+            name="notas"
+            rows={3}
+            defaultValue={lote.notas ?? ""}
+            placeholder="Ej. Prefiere que le hablen por las tardes, pidió factura, etc."
+            className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm"
+          />
+          <button className="rounded-full bg-forest-800 px-4 py-2 text-xs font-semibold text-sand-50 hover:bg-forest-700">
+            Guardar notas
+          </button>
+        </form>
+      </section>
     </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "forest" | "gold";
-}) {
+function Dato({ label, valor }: { label: string; valor: string }) {
   return (
-    <div className="rounded-xl border border-forest-900/10 bg-sand-50 p-4">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-forest-700/60">
+    <div>
+      <dt className="text-[11px] font-medium uppercase tracking-wide text-forest-700/60">
         {label}
-      </p>
-      <p
-        className={`mt-1.5 font-display text-xl font-semibold ${
-          tone === "forest"
-            ? "text-forest-700"
-            : tone === "gold"
-              ? "text-gold-600"
-              : "text-forest-900"
-        }`}
-      >
-        {value}
-      </p>
+      </dt>
+      <dd className="mt-0.5 font-semibold text-forest-900">{valor}</dd>
     </div>
   );
 }

@@ -354,6 +354,22 @@ export async function actualizarPreciosLote(formData: FormData) {
   revalidatePath(`/${lote.desarrollo.slug}/lotes`);
 }
 
+export async function actualizarNotasLote(formData: FormData) {
+  await requireAdmin();
+
+  const loteId = String(formData.get("loteId") ?? "");
+  if (!loteId) return;
+
+  const notas = String(formData.get("notas") ?? "").trim();
+
+  await prisma.lote.update({
+    where: { id: loteId },
+    data: { notas: notas || null },
+  });
+
+  revalidatePath(`/admin/lotes/${loteId}`);
+}
+
 export type ActualizarVentaState = { ok: boolean; message: string };
 
 export async function actualizarVentaLote(

@@ -7,6 +7,7 @@ import {
   getGaleriaImagenes,
   getTestimoniosAprobados,
 } from "@/lib/data";
+import { formatoMoneda } from "@/lib/financiamiento";
 import { GenericCalculator } from "@/components/generic-calculator";
 import { CountdownBanner } from "@/components/countdown-banner";
 import { HeroCarousel } from "@/components/hero-carousel";
@@ -166,8 +167,44 @@ export default async function DesarrolloPage({
         </div>
       </section>
 
+      <section className="bg-sand-100/70">
+        <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
+              Cómo comprar
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-semibold text-forest-900 sm:text-4xl">
+              Elige, cotiza y aparta en minutos
+            </h2>
+          </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <PasoCompra
+              numero={1}
+              title="Elige tu lote"
+              description="Explora los lotes disponibles y revisa la ficha completa de tu favorito."
+            />
+            <PasoCompra
+              numero={2}
+              title="Cotiza tu plan"
+              description={`Calcula tu enganche y mensualidad, sin intereses, a hasta ${config.plazoMaxPublico} meses.`}
+            />
+            <PasoCompra
+              numero={3}
+              title="Aparta en línea"
+              description={`Envía tu solicitud y aparta con un anticipo. Tienes ${config.plazoReservaDias} día(s) para confirmarlo.`}
+            />
+            <PasoCompra
+              numero={4}
+              title="Firma y sigue tu cuenta"
+              description="Te acompañamos en el proceso de compra-venta y das seguimiento a tus pagos desde tu cuenta."
+            />
+          </div>
+        </div>
+      </section>
+
       {testimonios.length > 0 && (
-        <section className="bg-sand-100/70">
+        <section>
           <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
@@ -201,10 +238,49 @@ export default async function DesarrolloPage({
         </section>
       )}
 
-      <section
-        id="financiamiento"
-        className={testimonios.length > 0 ? "" : "bg-sand-100/70"}
-      >
+      <section className="bg-sand-100/70">
+        <div className="mx-auto max-w-3xl px-5 py-20 sm:px-8">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
+              Preguntas frecuentes
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-semibold text-forest-900 sm:text-4xl">
+              Resolvemos tus dudas
+            </h2>
+          </div>
+
+          <div className="mt-10 divide-y divide-forest-900/10 rounded-2xl border border-forest-900/10 bg-sand-50">
+            <PreguntaFrecuente pregunta="¿Necesito enganche para apartar mi lote?">
+              No. Para apartar solo necesitas cubrir el monto mínimo de
+              apartado (
+              {formatoMoneda(Number(config.reservaMinima), config.moneda)}).
+              El enganche aplica únicamente si eliges pagar a crédito.
+            </PreguntaFrecuente>
+            <PreguntaFrecuente pregunta="¿El financiamiento tiene intereses?">
+              {config.tasaInteres > 0
+                ? `Manejamos una tasa del ${config.tasaInteres}% anual sobre el saldo financiado.`
+                : "No. Es financiamiento directo sin intereses: el precio que ves es el precio final, sin importar el plazo que elijas."}
+            </PreguntaFrecuente>
+            <PreguntaFrecuente pregunta="¿En cuánto tiempo debo confirmar mi apartado?">
+              {`Tienes ${config.plazoReservaDias} día(s) desde que envías tu solicitud para completar tu pago de apartado y que quede confirmado.`}
+            </PreguntaFrecuente>
+            <PreguntaFrecuente pregunta="¿Cómo puedo pagar?">
+              Puedes pagar por transferencia o depósito bancario
+              {config.whatsapp ? " y enviarnos tu comprobante por WhatsApp" : ""}.
+              Consulta con nuestro equipo otras formas de pago disponibles
+              para tu caso.
+            </PreguntaFrecuente>
+            <PreguntaFrecuente pregunta="¿Puedo dar seguimiento a mis pagos en línea?">
+              Sí. Al asignarte una cuenta de cliente puedes entrar a tu
+              portal para ver tu saldo, tu próximo pago y el historial
+              completo de lo que has pagado, con recibo descargable en cada
+              uno.
+            </PreguntaFrecuente>
+          </div>
+        </div>
+      </section>
+
+      <section id="financiamiento">
         <div className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
@@ -271,5 +347,51 @@ function Feature({
         {description}
       </p>
     </div>
+  );
+}
+
+function PasoCompra({
+  numero,
+  title,
+  description,
+}: {
+  numero: number;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-sand-50 p-6">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-500 font-display text-sm font-bold text-forest-950">
+        {numero}
+      </div>
+      <h3 className="mt-4 font-display text-lg font-semibold text-forest-900">
+        {title}
+      </h3>
+      <p className="mt-2 text-sm leading-relaxed text-forest-700/80">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function PreguntaFrecuente({
+  pregunta,
+  children,
+}: {
+  pregunta: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group px-6 py-4 first:rounded-t-2xl last:rounded-b-2xl open:bg-forest-900/[0.02]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-forest-900 marker:content-none">
+        {pregunta}
+        <span className="shrink-0 text-forest-700/50 transition group-open:rotate-45">
+          +
+        </span>
+      </summary>
+      <p className="mt-2.5 text-sm leading-relaxed text-forest-700/80">
+        {children}
+      </p>
+    </details>
   );
 }
