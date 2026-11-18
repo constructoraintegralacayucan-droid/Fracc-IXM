@@ -952,3 +952,48 @@ export async function cancelarReserva(formData: FormData) {
   revalidatePath("/admin/dashboard");
   revalidatePath(`/${reserva.lote.desarrollo.slug}/lotes`);
 }
+
+export type CrearAdminUsuarioState = { ok: boolean; message: string };
+
+export async function crearAdminUsuario(
+  _prevState: CrearAdminUsuarioState,
+  formData: FormData
+): Promise<CrearAdminUsuarioState> {
+  await requireAdmin();
+
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const rolRaw = String(formData.get("rol") ?? "ADMIN");
+  const rol = rolRaw === "VENDEDOR" ? "VENDEDOR" : "ADMIN";
+
+  if (!nombre || !email || !password) {
+    return { ok: false, message: "Completa nombre, correo y contraseña." };
+  }
+  if (password.length < 6) {
+    return {
+      ok: false,
+      message: "La contraseña debe tener al menos 6 caracteres.",
+    };
+  }
+
+  const existente = await prisma.adminUser.findUnique({ where: { email } });
+  if (existente) {
+    return {
+      ok: false,
+      message: "Ya existe un usuario del panel con ese correo.",
+    };
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await prisma.adminUser.create({
+    data: { nombre, email, passwordHash, rol },
+  });
+
+  revalidatePath("/admin/administradores");
+
+  return {
+    ok: true,
+    message: `Usuario "${nombre}" creado. Ya puede iniciar sesión en /admin/login.`,
+  };
+}
