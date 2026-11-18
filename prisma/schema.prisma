@@ -102,6 +102,12 @@ model Lote {
   notas              String?
   reservas           Reserva[]
 
+  // Posición del lote sobre la imagen del plano (fracción 0-1 del ancho y
+  // alto de la imagen), para el mapa interactivo. NULL si aún no se ha
+  // ubicado desde el admin.
+  planoX             Float?
+  planoY             Float?
+
   cliente            Cliente?      @relation(fields: [clienteId], references: [id])
   clienteId          String?
   numPagosTotal      Int?
@@ -309,6 +315,9 @@ model Desarrollo {
   moneda            String    @default("MXN")
   descripcion       String    @default("")
   imagenPortada     String?
+  // Plano/croquis real del fraccionamiento para el mapa interactivo de
+  // lotes (dataURL, igual que imagenPortada).
+  planoImagen       String?
   inicialMinimoPct  Float     @default(20)
   // Precios públicos por defecto para lotes que no tengan su propio
   // precioContado/precioCredito. Cambiar esto actualiza el precio

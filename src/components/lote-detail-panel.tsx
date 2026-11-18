@@ -25,6 +25,8 @@ export type LotePlano = {
   areaM2: number;
   frenteM: number;
   fondoM: number;
+  planoX: number | null;
+  planoY: number | null;
 };
 
 const initialState: CrearReservaState = { ok: false, message: "" };

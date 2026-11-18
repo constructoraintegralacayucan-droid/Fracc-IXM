@@ -997,3 +997,94 @@ export async function crearAdminUsuario(
     message: `Usuario "${nombre}" creado. Ya puede iniciar sesión en /admin/login.`,
   };
 }
+
+const MAX_BYTES_PLANO = 10 * 1024 * 1024;
+
+export type SubirPlanoState = { ok: boolean; message: string };
+
+export async function subirPlanoImagen(
+  _prevState: SubirPlanoState,
+  formData: FormData
+): Promise<SubirPlanoState> {
+  await requireAdmin();
+
+  const desarrolloId = String(formData.get("desarrolloId") ?? "");
+  const file = formData.get("imagen");
+  if (!desarrolloId) {
+    return { ok: false, message: "Falta el desarrollo." };
+  }
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Selecciona una imagen." };
+  }
+  if (!TIPOS_IMAGEN_PERMITIDOS.includes(file.type)) {
+    return {
+      ok: false,
+      message: "Formato no permitido. Usa JPG, PNG o WEBP.",
+    };
+  }
+  if (file.size > MAX_BYTES_PLANO) {
+    return {
+      ok: false,
+      message: "La imagen pesa más de 10MB. Comprímela e intenta de nuevo.",
+    };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
+
+  const desarrollo = await prisma.desarrollo.update({
+    where: { id: desarrolloId },
+    data: { planoImagen: dataUrl },
+  });
+
+  revalidatePath(`/${desarrollo.slug}/lotes`);
+  revalidatePath("/admin/plano");
+
+  return { ok: true, message: "Plano actualizado." };
+}
+
+export type GuardarPinState = { ok: boolean; message: string };
+
+export async function guardarPinLote(
+  _prevState: GuardarPinState,
+  formData: FormData
+): Promise<GuardarPinState> {
+  await requireAdmin();
+
+  const loteId = String(formData.get("loteId") ?? "");
+  const planoX = Number(formData.get("planoX") ?? NaN);
+  const planoY = Number(formData.get("planoY") ?? NaN);
+
+  if (!loteId || !Number.isFinite(planoX) || !Number.isFinite(planoY)) {
+    return { ok: false, message: "Datos de posición inválidos." };
+  }
+  if (planoX < 0 || planoX > 1 || planoY < 0 || planoY > 1) {
+    return { ok: false, message: "Posición fuera de los límites del plano." };
+  }
+
+  const lote = await prisma.lote.update({
+    where: { id: loteId },
+    data: { planoX, planoY },
+    include: { desarrollo: true },
+  });
+
+  revalidatePath("/admin/plano");
+  revalidatePath(`/${lote.desarrollo.slug}/lotes`);
+
+  return { ok: true, message: "Posición guardada." };
+}
+
+export async function borrarPinLote(formData: FormData) {
+  await requireAdmin();
+  const loteId = String(formData.get("loteId") ?? "");
+  if (!loteId) return;
+
+  const lote = await prisma.lote.update({
+    where: { id: loteId },
+    data: { planoX: null, planoY: null },
+    include: { desarrollo: true },
+  });
+
+  revalidatePath("/admin/plano");
+  revalidatePath(`/${lote.desarrollo.slug}/lotes`);
+}

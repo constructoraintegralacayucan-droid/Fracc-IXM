@@ -89,6 +89,7 @@ export default async function AdminDashboardPage({
         <QuickLink href="/admin/colaboradores" label="Colaboradores" />
         <QuickLink href="/admin/cupones" label="Cupones" />
         <QuickLink href="/admin/administradores" label="Administradores" />
+        <QuickLink href="/admin/plano" label="Plano interactivo" />
         <QuickLink href="/admin/configuracion" label="Promociones y precios" />
       </div>
 

@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   // validar en el propio formulario.
   experimental: {
     serverActions: {
-      bodySizeLimit: "5mb",
+      bodySizeLimit: "12mb",
     },
   },
   // El sitio antes era de un solo fraccionamiento; estas URLs pudieron

@@ -60,6 +60,8 @@ export default async function LotesPage({
           areaM2: l.areaM2 ?? config.areaM2Default,
           frenteM: l.frenteM ?? config.frenteMDefault,
           fondoM: l.fondoM ?? config.fondoMDefault,
+          planoX: l.planoX,
+          planoY: l.planoY,
         };
       }),
     };
@@ -87,6 +89,7 @@ export default async function LotesPage({
           manzanas={manzanasPlano}
           desarrolloSlug={slug}
           desarrolloNombre={config.nombre}
+          planoImagen={config.planoImagen}
           config={{
             moneda: config.moneda,
             inicialMinimoPct: config.inicialMinimoPct,
