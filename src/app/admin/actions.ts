@@ -708,6 +708,72 @@ export async function actualizarEstadoColaborador(formData: FormData) {
   revalidatePath("/admin/colaboradores");
 }
 
+export type CrearCuponState = { ok: boolean; message: string };
+
+export async function crearCupon(
+  _prevState: CrearCuponState,
+  formData: FormData
+): Promise<CrearCuponState> {
+  await requireAdmin();
+
+  const codigo = String(formData.get("codigo") ?? "").trim().toUpperCase();
+  const descripcion = String(formData.get("descripcion") ?? "").trim();
+  const tipoDescuentoRaw = String(formData.get("tipoDescuento") ?? "PORCENTAJE");
+  const tipoDescuento =
+    tipoDescuentoRaw === "MONTO_FIJO" ? "MONTO_FIJO" : "PORCENTAJE";
+  const valor = Number(formData.get("valor") ?? 0);
+  const desarrolloId = String(formData.get("desarrolloId") ?? "").trim();
+  const fechaInicioRaw = String(formData.get("fechaInicio") ?? "").trim();
+  const fechaFinRaw = String(formData.get("fechaFin") ?? "").trim();
+  const usosMaximosRaw = Number(formData.get("usosMaximos") ?? 0);
+
+  if (!codigo) {
+    return { ok: false, message: "Escribe un código para el cupón." };
+  }
+  if (!valor || valor <= 0) {
+    return { ok: false, message: "El valor del descuento no es válido." };
+  }
+  if (tipoDescuento === "PORCENTAJE" && valor > 100) {
+    return { ok: false, message: "El porcentaje no puede ser mayor a 100." };
+  }
+
+  const existente = await prisma.cupon.findUnique({ where: { codigo } });
+  if (existente) {
+    return { ok: false, message: "Ya existe un cupón con ese código." };
+  }
+
+  await prisma.cupon.create({
+    data: {
+      codigo,
+      descripcion: descripcion || null,
+      tipoDescuento,
+      valor,
+      desarrolloId: desarrolloId || null,
+      fechaInicio: fechaInicioRaw ? new Date(fechaInicioRaw) : null,
+      fechaFin: fechaFinRaw ? new Date(fechaFinRaw) : null,
+      usosMaximos: usosMaximosRaw > 0 ? Math.round(usosMaximosRaw) : null,
+    },
+  });
+
+  revalidatePath("/admin/cupones");
+
+  return { ok: true, message: `Cupón "${codigo}" creado.` };
+}
+
+export async function actualizarEstadoCupon(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const activo = formData.get("activo") === "on";
+  if (!id) return;
+
+  await prisma.cupon.update({
+    where: { id },
+    data: { activo },
+  });
+
+  revalidatePath("/admin/cupones");
+}
+
 const TIPOS_IMAGEN_PERMITIDOS = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BYTES_IMAGEN_PORTADA = 4 * 1024 * 1024;
 

@@ -80,6 +80,14 @@ export default async function AdminReservasPage({
                     Colaborador: {r.colaborador.nombre}
                   </span>
                 )}
+                {r.cupon && (
+                  <span className="rounded-full bg-forest-100 px-2.5 py-0.5 text-xs font-semibold text-forest-800">
+                    Cupón: {r.cupon.codigo}
+                    {r.descuentoAplicado
+                      ? ` (−${formatoMoneda(Number(r.descuentoAplicado))})`
+                      : ""}
+                  </span>
+                )}
               </div>
               <p className="mt-1 text-sm text-forest-800">
                 {r.nombre} · {r.telefono}

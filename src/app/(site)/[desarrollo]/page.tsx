@@ -11,6 +11,7 @@ import { formatoMoneda } from "@/lib/financiamiento";
 import { GenericCalculator } from "@/components/generic-calculator";
 import { CountdownBanner } from "@/components/countdown-banner";
 import { HeroCarousel } from "@/components/hero-carousel";
+import { esTemporadaNavidena } from "@/lib/temporada";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,8 @@ export default async function DesarrolloPage({
     (p) => p <= config.plazoMaxPublico
   );
 
+  const navidad = esTemporadaNavidena();
+
   return (
     <>
       {ofertaVigente && (
@@ -80,6 +83,11 @@ export default async function DesarrolloPage({
         )}
 
         <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+          {navidad && (
+            <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-sand-100/10 px-3.5 py-1.5 text-xs font-semibold text-sand-100">
+              ❄️ Felices Fiestas de parte de Terranova
+            </p>
+          )}
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gold-400">
             {config.nombre}
           </p>

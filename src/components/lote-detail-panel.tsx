@@ -5,7 +5,9 @@ import { useFormStatus } from "react-dom";
 import { calcularFinanciamiento, formatoMoneda } from "@/lib/financiamiento";
 import {
   crearReserva,
+  validarCuponAction,
   type CrearReservaState,
+  type ValidarCuponState,
 } from "@/app/(site)/[desarrollo]/lotes/actions";
 import type { ProyectoConfigPlano } from "./lote-map";
 import { ComprobanteUploadForm } from "./comprobante-upload-form";
@@ -26,6 +28,7 @@ export type LotePlano = {
 };
 
 const initialState: CrearReservaState = { ok: false, message: "" };
+const cuponInitialState: ValidarCuponState = { ok: false, message: "" };
 
 type Paso = "ficha" | "simulador" | "apartado";
 
@@ -62,11 +65,22 @@ export function LoteDetailPanel({
   const [precioContado] = useState(lote.precioContado ?? 0);
   const [precioCredito] = useState(lote.precioCredito ?? 0);
 
+  const [cuponState, cuponFormAction] = useActionState(
+    validarCuponAction,
+    cuponInitialState
+  );
+  const [cuponQuitado, setCuponQuitado] = useState(false);
+  const cuponAplicado = cuponState.ok && !cuponQuitado;
+  const descuentoContado = cuponAplicado ? cuponState.descuentoContado ?? 0 : 0;
+  const descuentoCredito = cuponAplicado ? cuponState.descuentoCredito ?? 0 : 0;
+  const precioContadoFinal = Math.max(precioContado - descuentoContado, 0);
+  const precioCreditoFinal = Math.max(precioCredito - descuentoCredito, 0);
+
   const [paso, setPaso] = useState<Paso>("ficha");
   const [tipoPago, setTipoPago] = useState<"CONTADO" | "CREDITO">("CONTADO");
 
   const engancheMinimo = Math.round(
-    (precioCredito * config.inicialMinimoPct) / 100
+    (precioCreditoFinal * config.inicialMinimoPct) / 100
   );
   const [inicial, setInicial] = useState(engancheMinimo);
   const plazosDisponibles =
@@ -78,17 +92,19 @@ export function LoteDetailPanel({
   const [plazoMeses, setPlazoMeses] = useState(plazoInicial);
 
   const mensualidadDesde =
-    plazoMax > 0 ? Math.round((precioCredito - engancheMinimo) / plazoMax) : 0;
+    plazoMax > 0
+      ? Math.round((precioCreditoFinal - engancheMinimo) / plazoMax)
+      : 0;
 
   const resultado = useMemo(
     () =>
       calcularFinanciamiento({
-        precio: precioCredito,
+        precio: precioCreditoFinal,
         inicial,
         plazoMeses,
         tasaInteresAnual: config.tasaInteres,
       }),
-    [precioCredito, inicial, plazoMeses, config.tasaInteres]
+    [precioCreditoFinal, inicial, plazoMeses, config.tasaInteres]
   );
 
   const [state, formAction] = useActionState(crearReserva, initialState);
@@ -111,7 +127,10 @@ export function LoteDetailPanel({
       ? "¡Solo queda 1 lote disponible en esta manzana!"
       : `Quedan ${disponiblesEnManzana} lotes disponibles en esta manzana`;
 
-  const precioApartado = tipoPago === "CONTADO" ? precioContado : precioCredito;
+  const precioApartado =
+    tipoPago === "CONTADO" ? precioContadoFinal : precioCreditoFinal;
+  const descuentoApartado =
+    tipoPago === "CONTADO" ? descuentoContado : descuentoCredito;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
@@ -154,13 +173,27 @@ export function LoteDetailPanel({
         {paso === "ficha" && (
           <FichaLote
             lote={lote}
-            precioContado={precioContado}
-            precioCredito={precioCredito}
+            precioContado={precioContadoFinal}
+            precioCredito={precioCreditoFinal}
+            precioContadoTachado={
+              cuponAplicado
+                ? precioContado
+                : lote.enPromocion
+                  ? lote.precioContadoOriginal
+                  : null
+            }
             engancheMinimo={engancheMinimo}
             mensualidadDesde={mensualidadDesde}
             moneda={config.moneda}
             avisoDisponibilidad={avisoDisponibilidad}
             linkPedirInfo={linkPedirInfo}
+            cuponState={cuponState}
+            cuponAplicado={cuponAplicado}
+            cuponFormAction={cuponFormAction}
+            desarrolloSlug={desarrolloSlug}
+            precioContadoBase={precioContado}
+            precioCreditoBase={precioCredito}
+            onQuitarCupon={() => setCuponQuitado(true)}
             onCalcular={() => setPaso("simulador")}
             onApartar={() => {
               setTipoPago("CONTADO");
@@ -179,7 +212,7 @@ export function LoteDetailPanel({
               <input
                 type="range"
                 min={engancheMinimo}
-                max={precioCredito}
+                max={precioCreditoFinal}
                 step={500}
                 value={inicial}
                 onChange={(e) => setInicial(Number(e.target.value))}
@@ -207,8 +240,14 @@ export function LoteDetailPanel({
               </select>
             </div>
 
+            {cuponAplicado && (
+              <p className="rounded-xl bg-forest-100 px-3.5 py-2 text-xs font-semibold text-forest-800">
+                Cupón {cuponState.codigo} aplicado: −
+                {formatoMoneda(descuentoCredito, config.moneda)}
+              </p>
+            )}
             <dl className="grid grid-cols-2 gap-3 rounded-2xl bg-white p-4 text-sm">
-              <Dato label="Precio del lote" valor={formatoMoneda(precioCredito, config.moneda)} />
+              <Dato label="Precio del lote" valor={formatoMoneda(precioCreditoFinal, config.moneda)} />
               <Dato label="Enganche" valor={formatoMoneda(inicial, config.moneda)} />
               <Dato label="Cantidad financiada" valor={formatoMoneda(resultado.aFinanciar, config.moneda)} />
               <Dato label="Número de mensualidades" valor={String(plazoMeses)} />
@@ -283,6 +322,12 @@ export function LoteDetailPanel({
                     etiqueta="Precio"
                     valor={formatoMoneda(precioApartado, config.moneda)}
                   />
+                  {cuponAplicado && (
+                    <RenglonResumen
+                      etiqueta="Cupón"
+                      valor={`${cuponState.codigo} (−${formatoMoneda(descuentoApartado, config.moneda)})`}
+                    />
+                  )}
                   <RenglonResumen
                     etiqueta="Monto del apartado"
                     valor={`desde ${formatoMoneda(config.reservaMinima, config.moneda)}`}
@@ -296,6 +341,9 @@ export function LoteDetailPanel({
                 <input type="hidden" name="desarrolloSlug" value={desarrolloSlug} />
                 <input type="hidden" name="clave" value={lote.clave} />
                 <input type="hidden" name="planTipoPago" value={tipoPago} />
+                {cuponAplicado && cuponState.codigo && (
+                  <input type="hidden" name="cuponCodigo" value={cuponState.codigo} />
+                )}
                 {tipoPago === "CREDITO" && (
                   <>
                     <input type="hidden" name="plazoMeses" value={plazoMeses} />
@@ -423,22 +471,38 @@ function FichaLote({
   lote,
   precioContado,
   precioCredito,
+  precioContadoTachado,
   engancheMinimo,
   mensualidadDesde,
   moneda,
   avisoDisponibilidad,
   linkPedirInfo,
+  cuponState,
+  cuponAplicado,
+  cuponFormAction,
+  desarrolloSlug,
+  precioContadoBase,
+  precioCreditoBase,
+  onQuitarCupon,
   onCalcular,
   onApartar,
 }: {
   lote: LotePlano;
   precioContado: number;
   precioCredito: number;
+  precioContadoTachado: number | null;
   engancheMinimo: number;
   mensualidadDesde: number;
   moneda: string;
   avisoDisponibilidad: string;
   linkPedirInfo: string | null;
+  cuponState: ValidarCuponState;
+  cuponAplicado: boolean;
+  cuponFormAction: (payload: FormData) => void;
+  desarrolloSlug: string;
+  precioContadoBase: number;
+  precioCreditoBase: number;
+  onQuitarCupon: () => void;
   onCalcular: () => void;
   onApartar: () => void;
 }) {
@@ -457,9 +521,9 @@ function FichaLote({
           <p className="text-[11px] font-medium uppercase tracking-wide text-forest-700/60">
             Precio de contado
           </p>
-          {lote.enPromocion && lote.precioContadoOriginal != null && (
+          {precioContadoTachado != null && (
             <p className="text-xs text-forest-700/50 line-through">
-              {formatoMoneda(lote.precioContadoOriginal, moneda)}
+              {formatoMoneda(precioContadoTachado, moneda)}
             </p>
           )}
           <p className="font-display text-xl font-semibold text-forest-900">
@@ -496,6 +560,38 @@ function FichaLote({
           estén disponibles. Sin contenido de relleno mientras tanto. */}
       <div className="mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-forest-900/15 bg-forest-900/[0.02] text-xs text-forest-700/40">
         Fotos, video y ubicación — próximamente
+      </div>
+
+      <div className="mt-4">
+        {cuponAplicado ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-forest-300 bg-forest-100 px-3.5 py-2.5">
+            <p className="text-sm font-semibold text-forest-800">
+              Cupón {cuponState.codigo} aplicado
+            </p>
+            <button
+              type="button"
+              onClick={onQuitarCupon}
+              className="text-xs font-semibold text-forest-700/70 hover:text-forest-900"
+            >
+              Quitar
+            </button>
+          </div>
+        ) : (
+          <form action={cuponFormAction} className="flex gap-2">
+            <input type="hidden" name="desarrolloSlug" value={desarrolloSlug} />
+            <input type="hidden" name="precioContado" value={precioContadoBase} />
+            <input type="hidden" name="precioCredito" value={precioCreditoBase} />
+            <input
+              name="cuponCodigo"
+              placeholder="¿Tienes un cupón?"
+              className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm uppercase placeholder:normal-case"
+            />
+            <BotonAplicarCupon />
+          </form>
+        )}
+        {cuponState.message && !cuponState.ok && (
+          <p className="mt-1.5 text-xs text-red-700">{cuponState.message}</p>
+        )}
       </div>
 
       <div className="mt-6 grid gap-2.5">
@@ -561,6 +657,19 @@ function SubmitButton() {
       className="w-full rounded-full bg-gold-500 py-3 text-sm font-semibold text-forest-950 transition hover:bg-gold-400 disabled:opacity-60"
     >
       {pending ? "Enviando..." : "Confirmar apartado"}
+    </button>
+  );
+}
+
+function BotonAplicarCupon() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="shrink-0 rounded-xl border border-forest-800 px-4 text-sm font-semibold text-forest-800 transition hover:bg-forest-800/5 disabled:opacity-60"
+    >
+      {pending ? "..." : "Aplicar"}
     </button>
   );
 }

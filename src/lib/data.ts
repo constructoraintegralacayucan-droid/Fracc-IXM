@@ -268,6 +268,7 @@ export async function getReservasTodas(desarrolloId: string) {
       lote: { include: { manzana: true } },
       pagos: true,
       colaborador: true,
+      cupon: true,
     },
   });
 }

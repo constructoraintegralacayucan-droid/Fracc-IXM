@@ -32,6 +32,7 @@ export default async function AdminLayout({
           <NavLink href="/admin/configuracion">Configuración</NavLink>
           <NavLink href="/admin/desarrollos">Desarrollos</NavLink>
           <NavLink href="/admin/colaboradores">Colaboradores</NavLink>
+          <NavLink href="/admin/cupones">Cupones</NavLink>
         </nav>
 
         <div className="mt-auto pt-8 text-xs text-sand-400">

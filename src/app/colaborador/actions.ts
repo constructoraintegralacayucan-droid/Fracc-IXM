@@ -10,6 +10,7 @@ import {
   getColaboradorSession,
 } from "@/lib/colaborador-session";
 import { getDesarrolloBySlug } from "@/lib/data";
+import { validarCupon, calcularDescuentoCupon } from "@/lib/cupones";
 
 export type LoginColaboradorState = { ok: boolean; message: string };
 
@@ -75,6 +76,7 @@ export async function crearSolicitudColaborador(
   const planTipoPago = String(formData.get("planTipoPago") ?? "CONTADO");
   const plazoMeses = Number(formData.get("plazoMeses") ?? 0) || null;
   const mensajeCliente = String(formData.get("mensajeCliente") ?? "").trim();
+  const cuponCodigo = String(formData.get("cuponCodigo") ?? "").trim();
 
   if (!clave || !nombre || !telefono) {
     return { ok: false, message: "Faltan datos obligatorios." };
@@ -104,6 +106,20 @@ export async function crearSolicitudColaborador(
   const expiraEn = new Date();
   expiraEn.setDate(expiraEn.getDate() + desarrollo.plazoReservaDias);
 
+  let cuponId: string | null = null;
+  let descuentoAplicado: number | null = null;
+  if (cuponCodigo) {
+    const resultadoCupon = await validarCupon(desarrollo.id, cuponCodigo);
+    if (resultadoCupon.ok) {
+      const esCredito = planTipoPago === "CREDITO";
+      const precioBase = esCredito
+        ? Number(lote.precioCredito ?? desarrollo.precioCreditoDefault)
+        : Number(lote.precioContado ?? desarrollo.precioContadoDefault);
+      cuponId = resultadoCupon.cupon.id;
+      descuentoAplicado = calcularDescuentoCupon(resultadoCupon.cupon, precioBase);
+    }
+  }
+
   await prisma.$transaction([
     prisma.reserva.create({
       data: {
@@ -116,6 +132,8 @@ export async function crearSolicitudColaborador(
         plazoMeses,
         mensajeCliente: mensajeCliente || null,
         colaboradorId: session.sub,
+        cuponId,
+        descuentoAplicado,
         expiraEn,
       },
     }),
@@ -127,6 +145,13 @@ export async function crearSolicitudColaborador(
       },
     }),
   ]);
+
+  if (cuponId) {
+    await prisma.cupon.update({
+      where: { id: cuponId },
+      data: { usosActuales: { increment: 1 } },
+    });
+  }
 
   revalidatePath("/colaborador/dashboard");
   revalidatePath("/admin/reservas");

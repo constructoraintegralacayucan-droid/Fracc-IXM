@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireCliente } from "@/lib/require-cliente";
 import { logoutCliente } from "../actions";
 import { Logo } from "@/components/logo";
+import { SnowOverlay } from "@/components/snow-overlay";
+import { esTemporadaNavidena } from "@/lib/temporada";
 
 export default async function ClienteLayout({
   children,
@@ -12,6 +14,7 @@ export default async function ClienteLayout({
 
   return (
     <div className="min-h-screen bg-sand-100/60">
+      {esTemporadaNavidena() && <SnowOverlay />}
       <header className="flex items-center justify-between border-b border-forest-900/10 bg-sand-50 px-5 py-4 sm:px-10">
         <Link href="/">
           <Logo subtitle={false} markClassName="h-8 w-8 text-forest-900" />

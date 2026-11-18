@@ -202,6 +202,17 @@ export function ColaboradorSolicitudPanel({
               />
             </div>
 
+            <div>
+              <label className="mb-1 block text-xs font-medium text-forest-700/70">
+                Código de cupón (opcional)
+              </label>
+              <input
+                name="cuponCodigo"
+                placeholder="Ej. NAVIDAD2026"
+                className="w-full rounded-xl border border-forest-800/20 bg-white px-3.5 py-2.5 text-sm uppercase"
+              />
+            </div>
+
             <SubmitButton />
 
             {state.message && (

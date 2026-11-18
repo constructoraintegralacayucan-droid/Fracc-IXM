@@ -11,6 +11,7 @@ const ITEMS = [
   { href: "/admin/configuracion", label: "Ajustes" },
   { href: "/admin/desarrollos", label: "Desarr." },
   { href: "/admin/colaboradores", label: "Colab." },
+  { href: "/admin/cupones", label: "Cupones" },
 ];
 
 export function AdminMobileNav() {

@@ -91,3 +91,34 @@ body {
 .font-display {
   font-family: var(--font-display), sans-serif;
 }
+
+@keyframes copo-caer {
+  from {
+    transform: translateY(-10vh) translateX(0);
+  }
+  to {
+    transform: translateY(110vh) translateX(var(--copo-deriva, 20px));
+  }
+}
+
+.copo-nieve {
+  position: absolute;
+  top: 0;
+  border-radius: 9999px;
+  background: #ffffff;
+  opacity: var(--copo-opacidad, 0.8);
+  animation: copo-caer linear infinite;
+  animation-duration: var(--copo-duracion, 12s);
+  animation-delay: var(--copo-retraso, 0s);
+  left: var(--copo-izquierda, 50%);
+  width: var(--copo-tamano, 6px);
+  height: var(--copo-tamano, 6px);
+  filter: blur(0.3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copo-nieve {
+    animation: none;
+    display: none;
+  }
+}

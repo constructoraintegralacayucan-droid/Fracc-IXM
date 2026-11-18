@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getDesarrolloBySlug } from "@/lib/data";
 import { crearCheckoutHospedado } from "@/lib/conekta";
 import { getSiteOrigin } from "@/lib/site";
+import { validarCupon, calcularDescuentoCupon } from "@/lib/cupones";
 
 export type CrearReservaState = {
   ok: boolean;
@@ -12,6 +13,44 @@ export type CrearReservaState = {
   checkoutUrl?: string;
   reservaId?: string;
 };
+
+export type ValidarCuponState = {
+  ok: boolean;
+  message: string;
+  codigo?: string;
+  descuentoContado?: number;
+  descuentoCredito?: number;
+};
+
+export async function validarCuponAction(
+  _prevState: ValidarCuponState,
+  formData: FormData
+): Promise<ValidarCuponState> {
+  const desarrolloSlug = String(formData.get("desarrolloSlug") ?? "");
+  const codigo = String(formData.get("cuponCodigo") ?? "");
+  const precioContado = Number(formData.get("precioContado") ?? 0);
+  const precioCredito = Number(formData.get("precioCredito") ?? 0);
+
+  const desarrollo = await getDesarrolloBySlug(desarrolloSlug);
+  if (!desarrollo) {
+    return { ok: false, message: "El desarrollo no existe." };
+  }
+
+  const resultado = await validarCupon(desarrollo.id, codigo);
+  if (!resultado.ok) {
+    return { ok: false, message: resultado.message };
+  }
+
+  return {
+    ok: true,
+    message: resultado.cupon.descripcion
+      ? `¡Cupón aplicado! ${resultado.cupon.descripcion}`
+      : "¡Cupón aplicado!",
+    codigo: resultado.cupon.codigo,
+    descuentoContado: calcularDescuentoCupon(resultado.cupon, precioContado),
+    descuentoCredito: calcularDescuentoCupon(resultado.cupon, precioCredito),
+  };
+}
 
 export async function crearReserva(
   _prevState: CrearReservaState,
@@ -26,6 +65,7 @@ export async function crearReserva(
   const planTipoPago = String(formData.get("planTipoPago") ?? "CONTADO");
   const plazoMeses = Number(formData.get("plazoMeses") ?? 0) || null;
   const inicialMonto = Number(formData.get("inicialMonto") ?? 0) || null;
+  const cuponCodigo = String(formData.get("cuponCodigo") ?? "").trim();
 
   if (!clave || !nombre || !telefono) {
     return { ok: false, message: "Faltan datos obligatorios." };
@@ -55,6 +95,20 @@ export async function crearReserva(
   const expiraEn = new Date();
   expiraEn.setDate(expiraEn.getDate() + desarrollo.plazoReservaDias);
 
+  let cuponId: string | null = null;
+  let descuentoAplicado: number | null = null;
+  if (cuponCodigo) {
+    const resultadoCupon = await validarCupon(desarrollo.id, cuponCodigo);
+    if (resultadoCupon.ok) {
+      const esCredito = planTipoPago === "CREDITO";
+      const precioBase = esCredito
+        ? Number(lote.precioCredito ?? desarrollo.precioCreditoDefault)
+        : Number(lote.precioContado ?? desarrollo.precioContadoDefault);
+      cuponId = resultadoCupon.cupon.id;
+      descuentoAplicado = calcularDescuentoCupon(resultadoCupon.cupon, precioBase);
+    }
+  }
+
   const [reserva] = await prisma.$transaction([
     prisma.reserva.create({
       data: {
@@ -66,6 +120,8 @@ export async function crearReserva(
         planTipoPago: planTipoPago === "CREDITO" ? "CREDITO" : "CONTADO",
         plazoMeses,
         inicialMonto,
+        cuponId,
+        descuentoAplicado,
         expiraEn,
       },
     }),
@@ -77,6 +133,13 @@ export async function crearReserva(
       },
     }),
   ]);
+
+  if (cuponId) {
+    await prisma.cupon.update({
+      where: { id: cuponId },
+      data: { usosActuales: { increment: 1 } },
+    });
+  }
 
   revalidatePath(`/${desarrolloSlug}/lotes`);
   revalidatePath("/admin/reservas");
